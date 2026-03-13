@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tasbih — Digital Dhikr</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RESET & VARIABLES
+   ============================================================ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+–bg:       #0b1610;
+–bg2:      #111e16;
+–bg3:      #182b1e;
+–gold:     #c9a84c;
+–gold-l:   #e8c97a;
+–gold-d:   #7a6030;
+–gold-x:   rgba(201,168,76,0.12);
+–text:     #ede4cc;
+–text-mid: #9e8f6e;
+–text-dim: #5a503a;
+–red:      #c0544a;
+–border:   rgba(201,168,76,0.14);
+–radius:   14px;
+–nav-h:    64px;
+}
+
+html, body {
+height: 100%; width: 100%;
+overflow: hidden;
+background: var(–bg);
+color: var(–text);
+font-family: ‘Outfit’, sans-serif;
+font-weight: 400;
+}
+
+#app {
+display: flex; flex-direction: column;
+height: 100%; width: 100%;
+position: relative; overflow: hidden;
+}
+
+.screen {
+display: none; flex-direction: column;
+flex: 1; overflow: hidden;
+position: absolute; inset: 0;
+padding-bottom: var(–nav-h);
+}
+.screen.active { display: flex; }
+
+.screen-scroll {
+flex: 1; overflow-y: auto;
+-webkit-overflow-scrolling: touch;
+padding: 0 0 16px;
+}
+.screen-scroll::-webkit-scrollbar { display: none; }
+
+/* ============================================================
+BOTTOM NAV
+============================================================ */
+#nav {
+position: fixed; bottom: 0; left: 0; right: 0;
+height: var(–nav-h);
+background: rgba(11,22,16,0.96);
+backdrop-filter: blur(20px);
+border-top: 1px solid var(–border);
+display: flex; align-items: center; justify-content: space-around;
+z-index: 1000;
+padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.nav-item {
+flex: 1; display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+gap: 4px; cursor: pointer; padding: 8px 4px;
+}
+.nav-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.nav-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(–text-dim); transition: color 0.2s; }
+.nav-item.active .nav-label { color: var(–gold); }
+.nav-item.active .nav-icon svg { stroke: var(–gold); }
+.nav-item:not(.active) .nav-icon svg { stroke: var(–text-dim); }
+
+/* ============================================================
+SCREEN HEADERS
+============================================================ */
+.screen-header {
+padding: 20px 20px 16px;
+border-bottom: 1px solid var(–border);
+display: flex; align-items: center; justify-content: space-between;
+flex-shrink: 0; background: var(–bg);
+}
+.screen-title { font-family: ‘Amiri’, serif; font-size: 22px; color: var(–gold); }
+.screen-subtitle { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(–text-dim); margin-top: 2px; }
+
+/* ============================================================
+SHARED COMPONENTS
+============================================================ */
+.btn { border: none; cursor: pointer; font-family: ‘Outfit’, sans-serif; transition: all 0.15s ease; }
+.btn:active { opacity: 0.75; transform: scale(0.97); }
+
+.btn-gold {
+background: linear-gradient(135deg, var(–gold-d), var(–gold));
+color: var(–bg); font-weight: 600; font-size: 13px;
+letter-spacing: 1px; padding: 12px 20px; border-radius: 8px;
+}
+.btn-outline {
+background: transparent; border: 1px solid var(–border);
+color: var(–text-mid); font-size: 12px; letter-spacing: 1px;
+padding: 10px 16px; border-radius: 8px;
+}
+.btn-ghost {
+background: transparent; color: var(–gold-d);
+font-size: 12px; letter-spacing: 1px;
+padding: 8px 12px; border-radius: 6px;
+}
+
+input, textarea {
+background: var(–bg2); border: 1px solid var(–border);
+border-radius: 8px; color: var(–text);
+font-family: ‘Outfit’, sans-serif; font-size: 15px;
+padding: 12px 14px; outline: none; width: 100%;
+transition: border-color 0.2s;
+}
+input:focus, textarea:focus { border-color: var(–gold-d); }
+input::placeholder, textarea::placeholder { color: var(–text-dim); }
+
+select {
+background: var(–bg2); border: 1px solid var(–border);
+border-radius: 8px; color: var(–text);
+font-family: ‘Outfit’, sans-serif; font-size: 14px;
+padding: 10px 14px; outline: none; width: 100%;
+-webkit-appearance: none;
+}
+
+/* ============================================================
+SCREEN 1: COUNTER
+============================================================ */
+#screen-counter { background: var(–bg); }
+
+/* TOP BAR: Set Target | progress label | progress bar | Reset Count */
+.counter-top {
+position: relative; z-index: 10;
+padding: 10px 14px;
+display: flex; align-items: center; gap: 8px;
+border-bottom: 1px solid var(–border);
+flex-shrink: 0; background: var(–bg2);
+}
+
+#btn-set-target {
+font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+padding: 8px 12px; border-radius: 7px; cursor: pointer;
+background: var(–gold-x); border: 1px solid var(–gold-d);
+color: var(–gold); white-space: nowrap; flex-shrink: 0;
+font-family: ‘Outfit’, sans-serif;
+transition: all 0.15s;
+}
+#btn-set-target:active { background: rgba(201,168,76,0.22); }
+
+.target-label {
+font-size: 11px; color: var(–text-mid);
+letter-spacing: 1px; white-space: nowrap; flex-shrink: 0;
+}
+.target-progress-track {
+flex: 1; height: 4px; background: var(–bg3);
+border-radius: 2px; overflow: hidden;
+}
+.target-progress-fill {
+height: 100%; background: linear-gradient(90deg, var(–gold-d), var(–gold));
+border-radius: 2px; transition: width 0.3s ease; width: 0%;
+}
+#btn-reset-counter {
+font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+padding: 8px 12px; border-radius: 7px; cursor: pointer;
+background: transparent; border: 1px solid rgba(201,168,76,0.2);
+color: var(–text-dim); white-space: nowrap; flex-shrink: 0;
+font-family: ‘Outfit’, sans-serif; transition: all 0.2s;
+}
+#btn-reset-counter:active { border-color: var(–gold); color: var(–gold); }
+
+/* DHIKR BAR */
+.dhikr-bar {
+padding: 10px 14px 12px;
+display: flex; align-items: center; gap: 8px;
+border-bottom: 1px solid var(–border);
+flex-shrink: 0; background: var(–bg2);
+}
+.dhikr-bar-text { flex: 1; }
+.dhikr-bar-arabic {
+font-family: ‘Amiri’, serif; font-size: 18px;
+color: var(–text); line-height: 1.4;
+padding-top: 3px; /* Arabic diacritics space */
+}
+.dhikr-bar-latin { font-size: 11px; color: var(–text-dim); margin-top: 2px; }
+.dhikr-bar-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.dhikr-bar-btns button {
+font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+padding: 7px 11px; border-radius: 6px; cursor: pointer;
+font-family: ‘Outfit’, sans-serif; white-space: nowrap;
+transition: all 0.15s;
+}
+#btn-change-dhikr {
+background: var(–gold-x); border: 1px solid var(–border); color: var(–gold-d);
+}
+#btn-add-dhikr {
+background: var(–bg3); border: 1px solid var(–border); color: var(–text-mid);
+}
+
+/* TAP AREA — counter number lives here now */
+#tap-area {
+flex: 1; width: 100%; border: none; outline: none;
+background: transparent; cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+position: relative; overflow: hidden;
+-webkit-user-select: none; user-select: none;
+}
+#tap-area::before {
+content: ‘’; position: absolute; inset: 0;
+background:
+radial-gradient(ellipse at 30% 30%, rgba(201,168,76,0.04) 0%, transparent 60%),
+radial-gradient(ellipse at 70% 70%, rgba(42,84,56,0.08) 0%, transparent 60%);
+}
+.tap-circle {
+width: min(270px, 68vw); height: min(270px, 68vw);
+border-radius: 50%;
+border: 1.5px solid rgba(201,168,76,0.2);
+display: flex; align-items: center; justify-content: center;
+flex-direction: column; position: relative;
+background: radial-gradient(ellipse at center, rgba(30,61,40,0.4) 0%, transparent 70%);
+transition: transform 0.1s ease;
+box-shadow: 0 0 80px rgba(201,168,76,0.04), inset 0 0 60px rgba(30,61,40,0.15);
+}
+.tap-circle::before {
+content: ‘’; position: absolute; inset: -14px;
+border-radius: 50%; border: 1px solid rgba(201,168,76,0.08);
+}
+.tap-circle::after {
+content: ‘’; position: absolute; inset: -28px;
+border-radius: 50%; border: 1px solid rgba(201,168,76,0.04);
+}
+#tap-area:active .tap-circle { transform: scale(0.95); }
+
+/* Counter number inside the circle */
+#counter-number {
+font-family: ‘Amiri’, serif; font-size: 80px; line-height: 1;
+color: var(–gold); text-shadow: 0 0 40px rgba(201,168,76,0.25);
+transition: transform 0.08s ease, color 0.1s; pointer-events: none;
+}
+#counter-number.pop { transform: scale(1.1); color: var(–gold-l); }
+.counter-rounds {
+font-size: 11px; color: var(–text-dim); margin-top: 6px;
+letter-spacing: 1px; pointer-events: none;
+}
+
+.tap-arabic {
+font-family: ‘Amiri’, serif; font-size: clamp(18px, 5vw, 26px);
+color: var(–gold); opacity: 0.6; text-align: center;
+line-height: 1.5; padding: 0 24px 0; margin-top: 8px;
+padding-top: 4px; /* space for Arabic diacritics */
+pointer-events: none;
+}
+.tap-latin {
+font-size: clamp(10px, 2.5vw, 12px); color: var(–text-dim);
+margin-top: 4px; letter-spacing: 1px; text-align: center;
+padding: 0 20px; pointer-events: none;
+}
+.tap-hint {
+font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+color: var(–text-dim); opacity: 0.4; margin-top: 12px;
+pointer-events: none;
+}
+
+.ripple {
+position: absolute; border-radius: 50%;
+background: rgba(201,168,76,0.12); transform: scale(0);
+animation: ripple-anim 0.55s ease-out forwards; pointer-events: none;
+}
+@keyframes ripple-anim { to { transform: scale(5); opacity: 0; } }
+
+/* BOTTOM: Continue from */
+.counter-bottom {
+padding: 10px 14px; border-top: 1px solid var(–border);
+display: flex; align-items: center; gap: 10px;
+flex-shrink: 0; background: var(–bg2);
+}
+.counter-bottom label {
+font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+color: var(–text-dim); white-space: nowrap; flex-shrink: 0;
+}
+#continue-input {
+flex: 1; font-family: ‘Amiri’, serif; font-size: 18px;
+text-align: center; padding: 8px 10px;
+}
+#btn-continue-set {
+background: var(–gold-x); border: 1px solid var(–border);
+color: var(–gold); font-size: 11px; letter-spacing: 1.5px;
+text-transform: uppercase; padding: 9px 14px;
+border-radius: 7px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+font-family: ‘Outfit’, sans-serif;
+}
+
+/* Milestone overlay */
+#milestone-overlay {
+position: fixed; inset: 0; z-index: 900;
+display: flex; align-items: center; justify-content: center;
+pointer-events: none; opacity: 0;
+}
+#milestone-overlay.show { animation: ms-anim 1.2s ease forwards; }
+.milestone-bubble {
+background: rgba(11,22,16,0.9); border: 1px solid var(–gold-d);
+border-radius: 20px; padding: 20px 36px; text-align: center;
+backdrop-filter: blur(20px);
+}
+.milestone-num {
+font-family: ‘Amiri’, serif; font-size: 56px; color: var(–gold-l);
+text-shadow: 0 0 30px rgba(201,168,76,0.5); line-height: 1;
+}
+.milestone-word {
+font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+color: var(–text-mid); margin-top: 6px;
+}
+@keyframes ms-anim {
+0%   { opacity:0; transform: scale(0.8); }
+15%  { opacity:1; transform: scale(1); }
+70%  { opacity:1; }
+100% { opacity:0; transform: scale(1.05); }
+}
+
+/* Custom confirm dialog */
+#confirm-overlay {
+position: fixed; inset: 0; z-index: 1100;
+background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+display: none; align-items: center; justify-content: center;
+}
+#confirm-overlay.open { display: flex; }
+.confirm-box {
+background: var(–bg2); border: 1px solid var(–border);
+border-radius: 16px; padding: 28px 24px; max-width: 300px; width: 90%;
+text-align: center;
+}
+.confirm-title {
+font-family: ‘Amiri’, serif; font-size: 20px; color: var(–gold);
+margin-bottom: 10px;
+}
+.confirm-msg { font-size: 13px; color: var(–text-dim); line-height: 1.6; margin-bottom: 22px; }
+.confirm-btns { display: flex; gap: 10px; }
+.confirm-btns button { flex: 1; padding: 12px; border-radius: 8px; font-family: ‘Outfit’, sans-serif; font-size: 13px; cursor: pointer; border: none; }
+.confirm-cancel { background: var(–bg3); color: var(–text-mid); border: 1px solid var(–border) !important; }
+.confirm-ok { background: linear-gradient(135deg, var(–gold-d), var(–gold)); color: var(–bg); font-weight: 600; }
+
+/* ============================================================
+MODALS
+============================================================ */
+.modal-overlay {
+position: fixed; inset: 0; z-index: 800;
+background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+display: none; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+width: 100%; max-width: 520px;
+background: var(–bg2); border-top: 1px solid var(–border);
+border-radius: 20px 20px 0 0;
+padding: 20px 20px calc(20px + env(safe-area-inset-bottom,0));
+max-height: 85vh; display: flex; flex-direction: column;
+animation: modal-up 0.3s ease;
+}
+@keyframes modal-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 36px; height: 4px; background: var(–bg3); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-family: ‘Amiri’, serif; font-size: 20px; color: var(–gold); margin-bottom: 16px; }
+.modal-scroll { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+.modal-scroll::-webkit-scrollbar { display: none; }
+
+/* Dhikr picker always renders above all other modals */
+#modal-dhikr-picker { z-index: 900; }
+#modal-add-to-seq   { z-index: 820; }
+#modal-goal         { z-index: 810; }
+#modal-target       { z-index: 810; }
+#modal-save-preset  { z-index: 810; }
+
+/* ============================================================
+DHIKR PICKER MODAL
+============================================================ */
+.dhikr-category-tabs {
+display: flex; gap: 6px; overflow-x: auto;
+padding-bottom: 10px; margin-bottom: 12px; scrollbar-width: none;
+align-items: center;
+}
+.dhikr-category-tabs::-webkit-scrollbar { display: none; }
+.cat-tab {
+flex-shrink: 0;
+height: 30px;
+padding: 0 13px;
+border-radius: 15px;
+font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+cursor: pointer; background: var(–bg3); border: 1px solid var(–border);
+color: var(–text-dim); transition: background 0.2s, color 0.2s, border-color 0.2s;
+white-space: nowrap;
+display: inline-flex; align-items: center; justify-content: center;
+font-family: ‘Outfit’, sans-serif; font-weight: 400;
+line-height: 1;
+}
+.cat-tab.active { background: var(–gold-x); border-color: var(–gold-d); color: var(–gold); }
+.dhikr-list { display: flex; flex-direction: column; gap: 8px; }
+.dhikr-item {
+background: var(–bg3); border: 1px solid var(–border);
+border-radius: 10px; padding: 14px 14px 12px; cursor: pointer;
+transition: all 0.15s; display: flex; align-items: center; gap: 12px;
+}
+.dhikr-item:active { border-color: var(–gold-d); background: var(–gold-x); }
+.dhikr-item-text { flex: 1; }
+.dhikr-item-arabic {
+font-family: ‘Amiri’, serif; font-size: 17px; color: var(–text);
+line-height: 1.4; padding-top: 3px;
+}
+.dhikr-item-latin { font-size: 11px; color: var(–text-dim); margin-top: 3px; }
+.dhikr-item-meaning { font-size: 11px; color: var(–text-mid); margin-top: 3px; font-style: italic; }
+.dhikr-add-custom { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(–border); }
+.dhikr-add-custom label {
+font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+color: var(–text-dim); display: block; margin-bottom: 8px;
+}
+
+/* ============================================================
+TARGET MODAL
+============================================================ */
+.target-mode-toggle {
+display: flex; background: var(–bg3); border: 1px solid var(–border);
+border-radius: 8px; overflow: hidden; margin-bottom: 16px;
+}
+.target-mode-btn {
+flex: 1; padding: 10px; font-size: 11px; letter-spacing: 1.5px;
+text-transform: uppercase; color: var(–text-dim); cursor: pointer;
+background: transparent; border: none; font-family: ‘Outfit’, sans-serif;
+transition: all 0.2s;
+}
+.target-mode-btn.active { background: var(–gold-x); color: var(–gold); }
+
+/* ============================================================
+SCREEN 2: SEQUENCE
+============================================================ */
+#screen-sequence { background: var(–bg); }
+.seq-state-idle { display: flex; flex-direction: column; height: 100%; }
+.seq-state-active { display: none; flex-direction: column; height: 100%; }
+.seq-state-done { display: none; flex-direction: column; height: 100%; align-items: center; justify-content: center; }
+
+.seq-presets { padding: 14px 20px; border-bottom: 1px solid var(–border); }
+.seq-presets-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(–text-dim); margin-bottom: 10px; }
+.seq-preset-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.preset-chip {
+padding: 6px 14px; border-radius: 20px; font-size: 11px; letter-spacing: 1px;
+background: var(–bg3); border: 1px solid var(–border); color: var(–text-mid);
+cursor: pointer; transition: all 0.2s;
+}
+.preset-chip:active { background: var(–gold-x); border-color: var(–gold-d); color: var(–gold); }
+
+.seq-builder { padding: 14px 20px; }
+.seq-builder-label {
+font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(–text-dim);
+margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;
+}
+.seq-items { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.seq-item {
+background: var(–bg3); border: 1px solid var(–border);
+border-radius: 10px; padding: 12px 14px;
+display: flex; align-items: center; gap: 10px;
+}
+.seq-item-num {
+width: 24px; height: 24px; border-radius: 50%;
+background: var(–bg2); border: 1px solid var(–border);
+display: flex; align-items: center; justify-content: center;
+font-size: 11px; color: var(–text-dim); flex-shrink: 0;
+}
+.seq-item-info { flex: 1; }
+.seq-item-arabic { font-family: ‘Amiri’, serif; font-size: 15px; color: var(–text); padding-top: 2px; }
+.seq-item-latin { font-size: 10px; color: var(–text-dim); margin-top: 2px; }
+.seq-item-count { font-family: ‘Amiri’, serif; font-size: 20px; color: var(–gold); flex-shrink: 0; }
+.seq-item-del {
+background: transparent; border: none; color: var(–text-dim);
+cursor: pointer; font-size: 18px; padding: 4px; flex-shrink: 0;
+}
+.seq-add-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+.seq-add-count { width: 72px; text-align: center; font-family: ‘Amiri’, serif; font-size: 16px; flex-shrink: 0; }
+
+/* Sequence direction toggle (in idle) */
+.seq-direction-row {
+display: flex; align-items: center; gap: 12px;
+padding: 12px 20px; border-top: 1px solid var(–border);
+}
+.seq-direction-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(–text-dim); flex: 1; }
+.seq-dir-toggle { display: flex; background: var(–bg3); border: 1px solid var(–border); border-radius: 6px; overflow: hidden; }
+.seq-dir-btn {
+padding: 7px 14px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+color: var(–text-dim); cursor: pointer; background: transparent; border: none;
+font-family: ‘Outfit’, sans-serif; transition: all 0.2s;
+}
+.seq-dir-btn.active { background: var(–gold-x); color: var(–gold); }
+
+/* Active sequence */
+.seq-active-top { padding: 12px 20px 10px; border-bottom: 1px solid var(–border); flex-shrink: 0; }
+
+/* Progress bar: segmented with live fill per segment */
+.seq-progress-bar {
+display: flex; gap: 4px; margin-bottom: 10px; height: 5px;
+}
+.seq-seg {
+flex: 1; border-radius: 2px; background: var(–bg3);
+overflow: hidden; position: relative;
+}
+.seq-seg-fill {
+position: absolute; inset: 0; border-radius: 2px;
+background: var(–gold-d); width: 0%;
+transition: width 0.15s ease;
+}
+.seq-seg.done .seq-seg-fill { width: 100%; background: var(–gold-d); }
+.seq-seg.current .seq-seg-fill { background: var(–gold); }
+
+.seq-active-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(–text-dim); }
+.seq-progress-label {
+font-size: 11px; color: var(–text-mid);
+margin-top: 3px; letter-spacing: 1px;
+}
+.seq-active-name { font-family: ‘Amiri’, serif; font-size: 18px; color: var(–text); margin-top: 4px; padding-top: 3px; }
+
+.seq-tap-area {
+flex: 1; border: none; outline: none; background: transparent; cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+flex-direction: column; gap: 0; position: relative; overflow: hidden;
+}
+.seq-tap-area:active .tap-circle { transform: scale(0.95); }
+
+/* Count number in seq tap circle */
+.seq-count-big {
+font-family: ‘Amiri’, serif; font-size: 80px; color: var(–gold); line-height: 1;
+text-shadow: 0 0 40px rgba(201,168,76,0.25); pointer-events: none;
+transition: transform 0.08s, color 0.1s;
+}
+.seq-count-big.pop { transform: scale(1.1); color: var(–gold-l); }
+
+.seq-active-bottom {
+padding: 10px 14px; border-top: 1px solid var(–border);
+display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap;
+}
+.seq-active-bottom button { flex: 1; min-width: 0; font-size: 11px; padding: 10px 8px; }
+
+/* Done state */
+.seq-done-icon { font-family: ‘Amiri’, serif; font-size: 64px; color: var(–gold); text-shadow: 0 0 40px rgba(201,168,76,0.3); margin-bottom: 20px; }
+.seq-done-title { font-family: ‘Amiri’, serif; font-size: 28px; color: var(–gold-l); margin-bottom: 8px; text-align: center; }
+.seq-done-sub { font-size: 13px; color: var(–text-dim); text-align: center; margin-bottom: 28px; max-width: 260px; line-height: 1.6; }
+.seq-done-summary { width: 100%; padding: 0 20px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.seq-done-row { display: flex; justify-content: space-between; padding: 10px 14px; background: var(–bg2); border: 1px solid var(–border); border-radius: 8px; }
+.seq-done-row-name { font-size: 13px; color: var(–text-mid); }
+.seq-done-row-arabic { font-family: ‘Amiri’, serif; font-size: 15px; color: var(–text); padding-top: 2px; }
+.seq-done-row-count { font-family: ‘Amiri’, serif; font-size: 18px; color: var(–gold); }
+
+/* ============================================================
+SCREEN 3: LIBRARY
+============================================================ */
+#screen-library { background: var(–bg); }
+.lib-search-bar { padding: 12px 20px; border-bottom: 1px solid var(–border); flex-shrink: 0; }
+.lib-search-input {
+width: 100%; padding: 10px 14px 10px 38px;
+background: var(–bg2); border: 1px solid var(–border);
+border-radius: 10px; color: var(–text); font-size: 14px;
+font-family: ‘Outfit’, sans-serif; outline: none;
+}
+.lib-search-wrap { position: relative; }
+.lib-search-icon {
+position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+color: var(–text-dim); font-size: 14px; pointer-events: none;
+}
+.lib-section { padding: 16px 20px 0; }
+.lib-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.lib-item {
+background: var(–bg2); border: 1px solid var(–border);
+border-radius: 12px; padding: 14px 16px 12px;
+display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s;
+}
+.lib-item:active { border-color: var(–gold-d); background: var(–gold-x); }
+.lib-item-body { flex: 1; }
+.lib-item-arabic { font-family: ‘Amiri’, serif; font-size: 18px; color: var(–text); padding-top: 3px; }
+.lib-item-latin { font-size: 11px; color: var(–text-dim); margin-top: 3px; }
+.lib-item-meaning { font-size: 12px; color: var(–text-mid); margin-top: 4px; font-style: italic; }
+.lib-item-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.lib-btn-count, .lib-btn-seq {
+font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+padding: 6px 10px; border-radius: 6px; cursor: pointer; border: none; white-space: nowrap;
+}
+.lib-btn-count { background: var(–gold-x); color: var(–gold); border: 1px solid var(–border) !important; }
+.lib-btn-seq { background: var(–bg3); color: var(–text-mid); border: 1px solid var(–border) !important; }
+
+/* ============================================================
+SCREEN 4: GOALS
+============================================================ */
+#screen-goals { background: var(–bg); }
+.goals-tabs { display: flex; border-bottom: 1px solid var(–border); flex-shrink: 0; }
+.goal-tab {
+flex: 1; padding: 12px; font-size: 11px; letter-spacing: 2px;
+text-transform: uppercase; color: var(–text-dim); text-align: center;
+cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.goal-tab.active { color: var(–gold); border-bottom-color: var(–gold); }
+.goals-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+.goal-card { background: var(–bg2); border: 1px solid var(–border); border-radius: 12px; padding: 16px; }
+.goal-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.goal-card-arabic { font-family: ‘Amiri’, serif; font-size: 18px; color: var(–text); padding-top: 3px; }
+.goal-card-latin { font-size: 11px; color: var(–text-dim); margin-top: 3px; }
+.goal-card-target { font-size: 12px; color: var(–text-mid); text-align: right; }
+.goal-card-target-num { font-family: ‘Amiri’, serif; font-size: 22px; color: var(–gold); display: block; }
+.goal-progress-track { height: 4px; background: var(–bg3); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.goal-progress-fill { height: 100%; background: linear-gradient(90deg, var(–gold-d), var(–gold)); border-radius: 2px; transition: width 0.5s ease; }
+.goal-card-bottom { display: flex; justify-content: space-between; align-items: center; }
+.goal-card-done { font-size: 11px; color: var(–text-dim); }
+
+/* ============================================================
+SCREEN 5: HISTORY
+============================================================ */
+#screen-history { background: var(–bg); }
+.history-summary { padding: 16px 20px; display: flex; gap: 10px; border-bottom: 1px solid var(–border); flex-shrink: 0; }
+.hist-stat { flex: 1; background: var(–bg2); border: 1px solid var(–border); border-radius: 10px; padding: 12px; text-align: center; }
+.hist-stat-num { font-family: ‘Amiri’, serif; font-size: 26px; color: var(–gold); display: block; }
+.hist-stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(–text-dim); margin-top: 3px; display: block; }
+.history-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+.hist-item { background: var(–bg2); border: 1px solid var(–border); border-radius: 12px; padding: 14px 16px 12px; }
+.hist-item-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.hist-item-arabic { font-family: ‘Amiri’, serif; font-size: 17px; color: var(–text); padding-top: 3px; }
+.hist-item-latin { font-size: 11px; color: var(–text-dim); margin-top: 3px; }
+.hist-item-count { font-family: ‘Amiri’, serif; font-size: 26px; color: var(–gold); }
+.hist-item-bottom { display: flex; justify-content: space-between; align-items: center; }
+.hist-item-date { font-size: 11px; color: var(–text-dim); }
+.hist-item-type {
+font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+padding: 3px 8px; border-radius: 10px; background: var(–bg3);
+border: 1px solid var(–border); color: var(–text-dim);
+}
+.hist-empty { text-align: center; padding: 60px 20px; color: var(–text-dim); font-size: 14px; line-height: 1.7; }
+.hist-empty-icon { font-family: ‘Amiri’, serif; font-size: 48px; color: var(–gold-d); opacity: 0.4; display: block; margin-bottom: 16px; }
+
+/* Form label */
+.form-label {
+font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+color: var(–text-dim); display: block; margin-bottom: 6px;
+}
+</style>
+
+</head>
+<body>
+<div id="app">
+
+  <!-- ========== SCREEN: COUNTER ========== -->
+
+  <div class="screen active" id="screen-counter">
+
+```
+<!-- TOP BAR: Set Target | progress | Reset Count -->
+<div class="counter-top">
+  <button id="btn-set-target" onclick="openTargetModal()">Set Target</button>
+  <span class="target-label" id="target-label"></span>
+  <div class="target-progress-track">
+    <div class="target-progress-fill" id="target-fill"></div>
+  </div>
+  <button id="btn-reset-counter" onclick="resetCounter()">Reset Count</button>
+</div>
+
+<!-- DHIKR BAR -->
+<div class="dhikr-bar">
+  <div class="dhikr-bar-text">
+    <div class="dhikr-bar-arabic" id="counter-dhikr-arabic">سُبْحَانَ ٱللَّٰهِ</div>
+    <div class="dhikr-bar-latin" id="counter-dhikr-latin">Subhanallah</div>
+  </div>
+  <div class="dhikr-bar-btns">
+    <button id="btn-change-dhikr" onclick="openDhikrPicker('counter')">Change Dhikr</button>
+    <button id="btn-add-dhikr" onclick="addDhikrToSequence()">Add Dhikr</button>
+  </div>
+</div>
+
+<!-- TAP AREA -->
+<button id="tap-area" onclick="handleCounterTap(event)">
+  <div class="tap-circle" id="tap-circle">
+    <div id="counter-number">0</div>
+    <div class="counter-rounds" id="counter-rounds"></div>
+    <div class="tap-arabic" id="tap-arabic">سُبْحَانَ ٱللَّٰهِ</div>
+    <div class="tap-latin" id="tap-latin">Subhanallah</div>
+    <div class="tap-hint">tap anywhere</div>
+  </div>
+</button>
+
+<!-- BOTTOM: Continue from -->
+<div class="counter-bottom">
+  <label>Continue from</label>
+  <input type="number" id="continue-input" placeholder="0" inputmode="numeric" min="0">
+  <button id="btn-continue-set" onclick="setContinue()">Set</button>
+</div>
+```
+
+  </div>
+
+  <!-- ========== SCREEN: SEQUENCE ========== -->
+
+  <div class="screen" id="screen-sequence">
+    <!-- IDLE STATE -->
+    <div class="seq-state-idle" id="seq-idle">
+      <div class="screen-header">
+        <div>
+          <div class="screen-title">Sequence</div>
+          <div class="screen-subtitle">Build your dhikr session</div>
+        </div>
+        <button class="btn btn-ghost" onclick="openSavePresetModal()">Save Preset</button>
+      </div>
+      <div class="screen-scroll">
+        <div class="seq-presets">
+          <div class="seq-presets-label">Presets</div>
+          <div class="seq-preset-chips" id="preset-chips"></div>
+        </div>
+        <div class="seq-builder">
+          <div class="seq-builder-label">
+            <span>Your Sequence</span>
+            <button class="btn btn-ghost" onclick="clearSequence()" style="font-size:11px">Clear all</button>
+          </div>
+          <div class="seq-items" id="seq-items-list"></div>
+          <div class="seq-add-row">
+            <div style="flex:1">
+              <button class="btn btn-outline" style="width:100%;font-size:12px" onclick="openDhikrPicker('sequence')">+ Add Dhikr</button>
+            </div>
+            <input type="number" class="seq-add-count" id="seq-add-count" placeholder="33" min="1" inputmode="numeric" value="33">
+          </div>
+          <button class="btn btn-gold" style="width:100%;margin-top:4px" onclick="startSequence()">Begin Session</button>
+        </div>
+      </div>
+      <!-- Direction toggle at bottom of idle -->
+      <div class="seq-direction-row">
+        <span class="seq-direction-label">Count direction</span>
+        <div class="seq-dir-toggle">
+          <button class="seq-dir-btn active" id="seqdir-up" onclick="setSeqDir('up')">Up</button>
+          <button class="seq-dir-btn" id="seqdir-down" onclick="setSeqDir('down')">Down</button>
+        </div>
+      </div>
+    </div>
+
+```
+<!-- ACTIVE STATE -->
+<div class="seq-state-active" id="seq-active">
+  <div class="seq-active-top">
+    <div class="seq-progress-bar" id="seq-progress-bar"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div class="seq-active-label" id="seq-active-label">Dhikr 1 of 3</div>
+      <div class="seq-progress-label" id="seq-progress-label">0 / 33</div>
+    </div>
+    <div class="seq-active-name" id="seq-active-name"></div>
+  </div>
+  <button class="seq-tap-area" id="seq-tap-area" onclick="handleSeqTap(event)">
+    <div class="tap-circle">
+      <div class="seq-count-big" id="seq-count-big">0</div>
+      <div class="tap-arabic" id="seq-tap-arabic"></div>
+      <div class="tap-latin" id="seq-tap-latin"></div>
+      <div class="tap-hint">tap anywhere</div>
+    </div>
+  </button>
+  <div class="seq-active-bottom">
+    <button class="btn btn-outline" onclick="restartCurrentSeqItem()">Restart Current</button>
+    <button class="btn btn-outline" onclick="restartAllSeq()">Restart All</button>
+    <button class="btn btn-outline" onclick="skipSeqItem()">Skip</button>
+    <button class="btn btn-outline" style="color:var(--red);border-color:rgba(192,84,74,0.3)" onclick="endSequence()">End</button>
+  </div>
+</div>
+
+<!-- DONE STATE -->
+<div class="seq-state-done" id="seq-done">
+  <div class="seq-done-icon">الحمد لله</div>
+  <div class="seq-done-title">Session Complete</div>
+  <div class="seq-done-sub">May your dhikr be accepted. Every remembrance of Allah is a light in your heart.</div>
+  <div class="seq-done-summary" id="seq-done-summary"></div>
+  <button class="btn btn-gold" style="margin:0 20px;width:calc(100% - 40px)" onclick="resetSequence()">New Session</button>
+</div>
+```
+
+  </div>
+
+  <!-- ========== SCREEN: LIBRARY ========== -->
+
+  <div class="screen" id="screen-library">
+    <div class="screen-header">
+      <div>
+        <div class="screen-title">Library</div>
+        <div class="screen-subtitle">Adhkar &amp; 99 Names</div>
+      </div>
+    </div>
+    <div class="lib-search-bar">
+      <div class="lib-search-wrap">
+        <span class="lib-search-icon">⌕</span>
+        <input type="text" class="lib-search-input" id="lib-search" placeholder="Search dhikr or meaning…" oninput="renderLibrary()">
+      </div>
+    </div>
+    <div class="dhikr-category-tabs" style="padding: 10px 20px 0" id="lib-cat-tabs"></div>
+    <div class="screen-scroll">
+      <div class="lib-section">
+        <div class="lib-grid" id="lib-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN: GOALS ========== -->
+
+  <div class="screen" id="screen-goals">
+    <div class="screen-header">
+      <div>
+        <div class="screen-title">Goals</div>
+        <div class="screen-subtitle">Daily · Weekly · Monthly</div>
+      </div>
+    </div>
+    <div class="goals-tabs">
+      <div class="goal-tab active" onclick="setGoalTab('daily')" id="gtab-daily">Daily</div>
+      <div class="goal-tab" onclick="setGoalTab('weekly')" id="gtab-weekly">Weekly</div>
+      <div class="goal-tab" onclick="setGoalTab('monthly')" id="gtab-monthly">Monthly</div>
+    </div>
+    <div class="screen-scroll">
+      <div class="goals-list" id="goals-list"></div>
+      <div style="padding: 0 20px 20px">
+        <button class="btn btn-gold" style="width:100%" onclick="openGoalModal()">+ Add Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN: HISTORY ========== -->
+
+  <div class="screen" id="screen-history">
+    <div class="screen-header">
+      <div>
+        <div class="screen-title">History</div>
+        <div class="screen-subtitle">Your remembrance</div>
+      </div>
+      <button class="btn btn-ghost" onclick="confirmClearHistory()" style="font-size:11px;color:var(--text-dim)">Clear</button>
+    </div>
+    <div class="history-summary" id="history-summary"></div>
+    <div class="screen-scroll">
+      <div class="history-list" id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- ========== BOTTOM NAV ========== -->
+
+  <nav id="nav">
+    <div class="nav-item active" onclick="goTo('counter')" id="nav-counter">
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="nav-label">Counter</div>
+    </div>
+    <div class="nav-item" onclick="goTo('sequence')" id="nav-sequence">
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+      <div class="nav-label">Sequence</div>
+    </div>
+    <div class="nav-item" onclick="goTo('library')" id="nav-library">
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <div class="nav-label">Library</div>
+    </div>
+    <div class="nav-item" onclick="goTo('goals')" id="nav-goals">
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="nav-label">Goals</div>
+    </div>
+    <div class="nav-item" onclick="goTo('history')" id="nav-history">
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div class="nav-label">History</div>
+    </div>
+  </nav>
+
+  <!-- ========== MILESTONE OVERLAY ========== -->
+
+  <div id="milestone-overlay">
+    <div class="milestone-bubble">
+      <div class="milestone-num" id="milestone-num"></div>
+      <div class="milestone-word" id="milestone-word"></div>
+    </div>
+  </div>
+
+  <!-- ========== CUSTOM CONFIRM DIALOG ========== -->
+
+  <div id="confirm-overlay">
+    <div class="confirm-box">
+      <div class="confirm-title" id="confirm-title">Are you sure?</div>
+      <div class="confirm-msg" id="confirm-msg"></div>
+      <div class="confirm-btns">
+        <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="confirm-ok" id="confirm-ok-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DHIKR PICKER MODAL ========== -->
+
+  <div class="modal-overlay" id="modal-dhikr-picker">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Choose Dhikr</div>
+      <div class="dhikr-category-tabs" id="picker-cat-tabs"></div>
+      <div class="modal-scroll">
+        <div class="dhikr-list" id="picker-dhikr-list"></div>
+        <div class="dhikr-add-custom">
+          <label>Custom Dhikr</label>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <input type="text" id="custom-arabic" placeholder="Arabic text (optional)" dir="rtl" style="font-family:'Amiri',serif;font-size:18px;padding-top:14px">
+            <input type="text" id="custom-latin" placeholder="Transliteration / name">
+            <input type="text" id="custom-meaning" placeholder="Meaning (optional)">
+            <button class="btn btn-gold" onclick="addCustomDhikr()">Use Custom</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TARGET MODAL ========== -->
+
+  <div class="modal-overlay" id="modal-target">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Set Target</div>
+      <label class="form-label" style="margin-bottom:8px">Count Direction</label>
+      <div class="target-mode-toggle">
+        <button class="target-mode-btn active" id="tmode-up" onclick="setTargetMode('up')">Count Up</button>
+        <button class="target-mode-btn" id="tmode-down" onclick="setTargetMode('down')">Count Down</button>
+      </div>
+      <label class="form-label" style="margin-bottom:8px">Quick Targets</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="preset-chip" onclick="setTargetQuick(33)">33</button>
+        <button class="preset-chip" onclick="setTargetQuick(66)">66</button>
+        <button class="preset-chip" onclick="setTargetQuick(99)">99</button>
+        <button class="preset-chip" onclick="setTargetQuick(100)">100</button>
+        <button class="preset-chip" onclick="setTargetQuick(500)">500</button>
+        <button class="preset-chip" onclick="setTargetQuick(1000)">1000</button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="number" id="target-input" placeholder="Custom number" inputmode="numeric" min="1" style="flex:1">
+        <button class="btn btn-gold" onclick="applyTarget()">Set</button>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:10px;width:100%;color:var(--text-dim)" onclick="clearTarget()">Remove target</button>
+    </div>
+  </div>
+
+  <!-- ========== GOAL MODAL ========== -->
+
+  <div class="modal-overlay" id="modal-goal">
+    <div class="modal" style="max-height:90vh;">
+      <div class="modal-handle"></div>
+      <div class="modal-title">New Goal</div>
+      <div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:12px;padding-bottom:4px;">
+        <div>
+          <label class="form-label">Dhikr</label>
+          <button class="btn btn-outline" style="width:100%;text-align:left;padding:12px 14px" id="goal-dhikr-btn" onclick="openDhikrPickerForGoal()">
+            <span id="goal-dhikr-display">Tap to select a dhikr…</span>
+          </button>
+        </div>
+        <div>
+          <label class="form-label">Period</label>
+          <select id="goal-period">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Target Count</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+            <button class="preset-chip" onclick="setGoalCountQuick(33)">33</button>
+            <button class="preset-chip" onclick="setGoalCountQuick(99)">99</button>
+            <button class="preset-chip" onclick="setGoalCountQuick(100)">100</button>
+            <button class="preset-chip" onclick="setGoalCountQuick(500)">500</button>
+            <button class="preset-chip" onclick="setGoalCountQuick(1000)">1000</button>
+          </div>
+          <input type="number" id="goal-count" placeholder="e.g. 100" inputmode="numeric" min="1">
+        </div>
+      </div>
+      <div style="padding-top:12px;border-top:1px solid var(--border);margin-top:4px;flex-shrink:0;">
+        <button class="btn btn-gold" style="width:100%" onclick="saveGoal()">Save Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SAVE PRESET MODAL ========== -->
+
+  <div class="modal-overlay" id="modal-save-preset">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Save as Preset</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label class="form-label">Preset Name</label>
+          <input type="text" id="preset-name-input" placeholder="e.g. After Fajr">
+        </div>
+        <button class="btn btn-gold" onclick="savePreset()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ADD DHIKR TO SEQ (from counter) ========== -->
+
+  <div class="modal-overlay" id="modal-add-to-seq">
+    <div class="modal" style="max-height:90vh;">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Build a Sequence</div>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:14px">
+        Your current dhikr is added first. Tap "+ Add More" to keep building, then start.
+      </p>
+      <div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;" id="seq-preview-scroll">
+        <div class="seq-items" id="seq-preview-list"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+          <button class="btn btn-outline" style="flex:1;font-size:12px" onclick="openDhikrPicker('addseq')">+ Add More</button>
+          <input type="number" class="seq-add-count" id="seq-preview-count" placeholder="33" min="1" inputmode="numeric" value="33" style="width:72px;flex-shrink:0;font-family:'Amiri',serif;font-size:16px;text-align:center">
+        </div>
+      </div>
+      <div style="padding-top:12px;border-top:1px solid var(--border);margin-top:12px;flex-shrink:0;">
+        <button class="btn btn-gold" style="width:100%" onclick="launchFromCounter()">▶ Start Sequence</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+// ============================================================
+// DHIKR DATABASE
+// ============================================================
+const DHIKR_DB = {
+  common: [
+    { arabic: 'سُبْحَانَ ٱللَّٰهِ', latin: 'Subhanallah', meaning: 'Glory be to Allah' },
+    { arabic: 'ٱلْحَمْدُ لِلَّٰهِ', latin: 'Alhamdulillah', meaning: 'All praise is due to Allah' },
+    { arabic: 'ٱللَّٰهُ أَكْبَرُ', latin: 'Allahu Akbar', meaning: 'Allah is the Greatest' },
+    { arabic: 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ', latin: 'La ilaha illallah', meaning: 'There is no god but Allah' },
+    { arabic: 'أَسْتَغْفِرُ ٱللَّٰهَ', latin: 'Astaghfirullah', meaning: 'I seek forgiveness from Allah' },
+    { arabic: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِٱللَّٰهِ', latin: 'La hawla wala quwwata illa billah', meaning: 'There is no power except with Allah' },
+    { arabic: 'سُبْحَانَ ٱللَّٰهِ وَبِحَمْدِهِ', latin: 'Subhanallahi wa bihamdih', meaning: 'Glory to Allah and His is the praise' },
+    { arabic: 'سُبْحَانَ ٱللَّٰهِ ٱلْعَظِيمِ', latin: "Subhanallahil 'Azeem", meaning: 'Glory to Allah the Magnificent' },
+    { arabic: 'ٱللَّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ', latin: 'Allahumma salli ala Muhammad', meaning: 'O Allah, send prayers upon Muhammad ﷺ' },
+    { arabic: 'بِسْمِ ٱللَّٰهِ', latin: 'Bismillah', meaning: 'In the name of Allah' },
+    { arabic: 'حَسْبُنَا ٱللَّٰهُ وَنِعْمَ ٱلْوَكِيلُ', latin: "Hasbunallahu wa ni'mal wakeel", meaning: 'Allah is sufficient and the best disposer of affairs' },
+  ],
+  morning: [
+    { arabic: 'أَصْبَحْنَا وَأَصْبَحَ ٱلْمُلْكُ لِلَّٰهِ', latin: 'Asbahna wa asbahal mulku lillah', meaning: 'We have reached morning and the kingdom belongs to Allah' },
+    { arabic: 'ٱللَّٰهُمَّ بِكَ أَصْبَحْنَا', latin: 'Allahumma bika asbahna', meaning: 'O Allah, by Your grace we have reached morning' },
+    { arabic: 'أَعُوذُ بِٱللَّٰهِ مِنَ ٱلشَّيْطَانِ ٱلرَّجِيمِ', latin: 'Audhu billahi minash shaytanir rajeem', meaning: 'I seek refuge in Allah from the accursed Shaytan' },
+    { arabic: 'رَضِيتُ بِٱللَّٰهِ رَبًّا', latin: 'Raditu billahi rabba', meaning: 'I am pleased with Allah as my Lord' },
+  ],
+  evening: [
+    { arabic: 'أَمْسَيْنَا وَأَمْسَى ٱلْمُلْكُ لِلَّٰهِ', latin: 'Amsayna wa amsal mulku lillah', meaning: 'We have reached evening and the kingdom belongs to Allah' },
+    { arabic: 'ٱللَّٰهُمَّ بِكَ أَمْسَيْنَا', latin: 'Allahumma bika amsayna', meaning: 'O Allah, by Your grace we have reached evening' },
+    { arabic: 'ٱللَّٰهُمَّ إِنِّي أَمْسَيْتُ أُشْهِدُكَ', latin: 'Allahumma inni amsaytu ush-hiduka', meaning: 'O Allah, I have reached evening calling You to witness' },
+  ],
+  afterPrayer: [
+    { arabic: 'سُبْحَانَ ٱللَّٰهِ', latin: 'Subhanallah', meaning: 'Glory be to Allah — ×33' },
+    { arabic: 'ٱلْحَمْدُ لِلَّٰهِ', latin: 'Alhamdulillah', meaning: 'All praise to Allah — ×33' },
+    { arabic: 'ٱللَّٰهُ أَكْبَرُ', latin: 'Allahu Akbar', meaning: 'Allah is Greatest — ×33' },
+    { arabic: 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ وَحْدَهُ', latin: 'La ilaha illallahu wahdah', meaning: 'None worthy of worship except Allah, alone — ×1' },
+  ],
+  names99: [
+    { arabic: 'ٱلرَّحْمَٰنُ', latin: 'Ar-Rahman', meaning: 'The Most Gracious' },
+    { arabic: 'ٱلرَّحِيمُ', latin: 'Ar-Raheem', meaning: 'The Most Merciful' },
+    { arabic: 'ٱلْمَلِكُ', latin: 'Al-Malik', meaning: 'The King' },
+    { arabic: 'ٱلْقُدُّوسُ', latin: 'Al-Quddus', meaning: 'The Holy, The Pure' },
+    { arabic: 'ٱلسَّلَامُ', latin: 'As-Salam', meaning: 'The Source of Peace' },
+    { arabic: 'ٱلْمُؤْمِنُ', latin: "Al-Mu'min", meaning: 'The Guardian of Faith' },
+    { arabic: 'ٱلْمُهَيْمِنُ', latin: 'Al-Muhaymin', meaning: 'The Protector' },
+    { arabic: 'ٱلْعَزِيزُ', latin: "Al-'Aziz", meaning: 'The Almighty' },
+    { arabic: 'ٱلْجَبَّارُ', latin: 'Al-Jabbar', meaning: 'The Compeller' },
+    { arabic: 'ٱلْمُتَكَبِّرُ', latin: 'Al-Mutakabbir', meaning: 'The Majestic' },
+    { arabic: 'ٱلْخَالِقُ', latin: 'Al-Khaliq', meaning: 'The Creator' },
+    { arabic: 'ٱلْبَارِئُ', latin: "Al-Bari'", meaning: 'The Originator' },
+    { arabic: 'ٱلْمُصَوِّرُ', latin: 'Al-Musawwir', meaning: 'The Fashioner of Forms' },
+    { arabic: 'ٱلْغَفَّارُ', latin: 'Al-Ghaffar', meaning: 'The Forgiving' },
+    { arabic: 'ٱلْقَهَّارُ', latin: 'Al-Qahhar', meaning: 'The Subduer' },
+    { arabic: 'ٱلْوَهَّابُ', latin: 'Al-Wahhab', meaning: 'The Bestower' },
+    { arabic: 'ٱلرَّزَّاقُ', latin: 'Ar-Razzaq', meaning: 'The Provider' },
+    { arabic: 'ٱلْفَتَّاحُ', latin: 'Al-Fattah', meaning: 'The Opener' },
+    { arabic: 'ٱلْعَلِيمُ', latin: "Al-'Alim", meaning: 'The All-Knowing' },
+    { arabic: 'ٱلْقَابِضُ', latin: 'Al-Qabid', meaning: 'The Constrictor' },
+    { arabic: 'ٱلْبَاسِطُ', latin: 'Al-Basit', meaning: 'The Expander' },
+    { arabic: 'ٱلْخَافِضُ', latin: 'Al-Khafid', meaning: 'The Abaser' },
+    { arabic: 'ٱلرَّافِعُ', latin: 'Ar-Rafi', meaning: 'The Exalter' },
+    { arabic: 'ٱلْمُعِزُّ', latin: "Al-Mu'izz", meaning: 'The Honourer' },
+    { arabic: 'ٱلْمُذِلُّ', latin: 'Al-Mudhill', meaning: 'The Humiliator' },
+    { arabic: 'ٱلسَّمِيعُ', latin: 'As-Sami', meaning: 'The All-Hearing' },
+    { arabic: 'ٱلْبَصِيرُ', latin: 'Al-Basir', meaning: 'The All-Seeing' },
+    { arabic: 'ٱلْحَكَمُ', latin: 'Al-Hakam', meaning: 'The Judge' },
+    { arabic: 'ٱلْعَدْلُ', latin: "Al-'Adl", meaning: 'The Just' },
+    { arabic: 'ٱللَّطِيفُ', latin: 'Al-Latif', meaning: 'The Subtle One' },
+    { arabic: 'ٱلْخَبِيرُ', latin: 'Al-Khabir', meaning: 'The All-Aware' },
+    { arabic: 'ٱلْحَلِيمُ', latin: 'Al-Halim', meaning: 'The Forbearing' },
+    { arabic: 'ٱلْعَظِيمُ', latin: "Al-'Azim", meaning: 'The Magnificent' },
+    { arabic: 'ٱلْغَفُورُ', latin: 'Al-Ghafur', meaning: 'The Forgiving' },
+    { arabic: 'ٱلشَّكُورُ', latin: 'Ash-Shakur', meaning: 'The Appreciative' },
+    { arabic: 'ٱلْعَلِيُّ', latin: "Al-'Ali", meaning: 'The Most High' },
+    { arabic: 'ٱلْكَبِيرُ', latin: 'Al-Kabir', meaning: 'The Most Great' },
+    { arabic: 'ٱلْحَفِيظُ', latin: 'Al-Hafiz', meaning: 'The Preserver' },
+    { arabic: 'ٱلْمُقِيتُ', latin: 'Al-Muqit', meaning: 'The Sustainer' },
+    { arabic: 'ٱلْحَسِيبُ', latin: 'Al-Hasib', meaning: 'The Reckoner' },
+    { arabic: 'ٱلْجَلِيلُ', latin: 'Al-Jalil', meaning: 'The Majestic' },
+    { arabic: 'ٱلْكَرِيمُ', latin: 'Al-Karim', meaning: 'The Generous' },
+    { arabic: 'ٱلرَّقِيبُ', latin: 'Ar-Raqib', meaning: 'The Watchful' },
+    { arabic: 'ٱلْمُجِيبُ', latin: 'Al-Mujib', meaning: 'The Responsive' },
+    { arabic: 'ٱلْوَاسِعُ', latin: "Al-Wasi'", meaning: 'The All-Encompassing' },
+    { arabic: 'ٱلْحَكِيمُ', latin: 'Al-Hakim', meaning: 'The Wise' },
+    { arabic: 'ٱلْوَدُودُ', latin: 'Al-Wadud', meaning: 'The Loving' },
+    { arabic: 'ٱلْمَجِيدُ', latin: 'Al-Majid', meaning: 'The Glorious' },
+    { arabic: 'ٱلْبَاعِثُ', latin: "Al-Ba'ith", meaning: 'The Resurrector' },
+    { arabic: 'ٱلشَّهِيدُ', latin: 'Ash-Shahid', meaning: 'The Witness' },
+    { arabic: 'ٱلْحَقُّ', latin: 'Al-Haqq', meaning: 'The Truth' },
+    { arabic: 'ٱلْوَكِيلُ', latin: 'Al-Wakil', meaning: 'The Trustee' },
+    { arabic: 'ٱلْقَوِيُّ', latin: 'Al-Qawiyy', meaning: 'The Powerful' },
+    { arabic: 'ٱلْمَتِينُ', latin: 'Al-Matin', meaning: 'The Firm' },
+    { arabic: 'ٱلْوَلِيُّ', latin: 'Al-Waliyy', meaning: 'The Protecting Friend' },
+    { arabic: 'ٱلْحَمِيدُ', latin: 'Al-Hamid', meaning: 'The Praiseworthy' },
+    { arabic: 'ٱلْمُحْصِي', latin: 'Al-Muhsi', meaning: 'The Accounter' },
+    { arabic: 'ٱلْمُبْدِئُ', latin: "Al-Mubdi'", meaning: 'The Originator' },
+    { arabic: 'ٱلْمُعِيدُ', latin: "Al-Mu'id", meaning: 'The Restorer' },
+    { arabic: 'ٱلْمُحْيِي', latin: 'Al-Muhyi', meaning: 'The Giver of Life' },
+    { arabic: 'ٱلْمُمِيتُ', latin: 'Al-Mumit', meaning: 'The Taker of Life' },
+    { arabic: 'ٱلْحَيُّ', latin: 'Al-Hayy', meaning: 'The Ever-Living' },
+    { arabic: 'ٱلْقَيُّومُ', latin: 'Al-Qayyum', meaning: 'The Self-Subsisting' },
+    { arabic: 'ٱلْوَاجِدُ', latin: 'Al-Wajid', meaning: 'The Finder' },
+    { arabic: 'ٱلْمَاجِدُ', latin: 'Al-Majid', meaning: 'The Noble' },
+    { arabic: 'ٱلْوَاحِدُ', latin: 'Al-Wahid', meaning: 'The One' },
+    { arabic: 'ٱلْأَحَدُ', latin: 'Al-Ahad', meaning: 'The Unique' },
+    { arabic: 'ٱلصَّمَدُ', latin: 'As-Samad', meaning: 'The Eternal' },
+    { arabic: 'ٱلْقَادِرُ', latin: 'Al-Qadir', meaning: 'The All-Powerful' },
+    { arabic: 'ٱلْمُقْتَدِرُ', latin: 'Al-Muqtadir', meaning: 'The Prevailing' },
+    { arabic: 'ٱلْمُقَدِّمُ', latin: 'Al-Muqaddim', meaning: 'The Expediter' },
+    { arabic: 'ٱلْمُؤَخِّرُ', latin: "Al-Mu'akhkhir", meaning: 'The Delayer' },
+    { arabic: 'ٱلْأَوَّلُ', latin: 'Al-Awwal', meaning: 'The First' },
+    { arabic: 'ٱلْآخِرُ', latin: 'Al-Akhir', meaning: 'The Last' },
+    { arabic: 'ٱلظَّاهِرُ', latin: 'Az-Zahir', meaning: 'The Manifest' },
+    { arabic: 'ٱلْبَاطِنُ', latin: 'Al-Batin', meaning: 'The Hidden' },
+    { arabic: 'ٱلْوَالِي', latin: 'Al-Wali', meaning: 'The Governor' },
+    { arabic: 'ٱلْمُتَعَالِي', latin: "Al-Muta'ali", meaning: 'The Most Exalted' },
+    { arabic: 'ٱلْبَرُّ', latin: 'Al-Barr', meaning: 'The Beneficent' },
+    { arabic: 'ٱلتَّوَّابُ', latin: 'At-Tawwab', meaning: 'The Relenting' },
+    { arabic: 'ٱلْمُنْتَقِمُ', latin: 'Al-Muntaqim', meaning: 'The Avenger' },
+    { arabic: 'ٱلْعَفُوُّ', latin: "Al-'Afuww", meaning: 'The Pardoner' },
+    { arabic: 'ٱلرَّءُوفُ', latin: "Ar-Ra'uf", meaning: 'The Compassionate' },
+    { arabic: 'مَالِكُ ٱلْمُلْكِ', latin: 'Malikul-Mulk', meaning: 'The Owner of Sovereignty' },
+    { arabic: 'ذُو ٱلْجَلَالِ وَٱلْإِكْرَامِ', latin: 'Dhul-Jalali wal-Ikram', meaning: 'Lord of Majesty and Honour' },
+    { arabic: 'ٱلْمُقْسِطُ', latin: 'Al-Muqsit', meaning: 'The Equitable' },
+    { arabic: 'ٱلْجَامِعُ', latin: 'Al-Jami', meaning: 'The Gatherer' },
+    { arabic: 'ٱلْغَنِيُّ', latin: 'Al-Ghani', meaning: 'The Self-Sufficient' },
+    { arabic: 'ٱلْمُغْنِي', latin: 'Al-Mughni', meaning: 'The Enricher' },
+    { arabic: 'ٱلْمَانِعُ', latin: "Al-Mani'", meaning: 'The Preventer' },
+    { arabic: 'ٱلضَّارُّ', latin: 'Ad-Darr', meaning: 'The Distressor' },
+    { arabic: 'ٱلنَّافِعُ', latin: 'An-Nafi', meaning: 'The Benefiter' },
+    { arabic: 'ٱلنُّورُ', latin: 'An-Nur', meaning: 'The Light' },
+    { arabic: 'ٱلْهَادِي', latin: 'Al-Hadi', meaning: 'The Guide' },
+    { arabic: 'ٱلْبَدِيعُ', latin: "Al-Badi'", meaning: 'The Originator of All' },
+    { arabic: 'ٱلْبَاقِي', latin: 'Al-Baqi', meaning: 'The Ever-Enduring' },
+    { arabic: 'ٱلْوَارِثُ', latin: 'Al-Warith', meaning: 'The Inheritor' },
+    { arabic: 'ٱلرَّشِيدُ', latin: 'Ar-Rashid', meaning: 'The Guide to Right Path' },
+    { arabic: 'ٱلصَّبُورُ', latin: 'As-Sabur', meaning: 'The Patient' },
+  ]
+};
+
+const PRESETS_BUILTIN = [
+  { name: 'After Salah', items: [
+    { ...DHIKR_DB.common[0], count: 33 },
+    { ...DHIKR_DB.common[1], count: 33 },
+    { ...DHIKR_DB.common[2], count: 33 },
+    { arabic: 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ وَحْدَهُ', latin: 'La ilaha illallahu wahdah', meaning: 'None worthy of worship except Allah alone', count: 1 },
+  ]},
+  { name: 'Istighfar 100', items: [{ ...DHIKR_DB.common[4], count: 100 }] },
+  { name: 'Morning 3', items: [
+    { ...DHIKR_DB.common[0], count: 33 },
+    { ...DHIKR_DB.common[1], count: 33 },
+    { ...DHIKR_DB.common[2], count: 33 },
+  ]},
+  { name: 'Salawat 100', items: [{ ...DHIKR_DB.common[8], count: 100 }] },
+  { name: 'Tahlil 1000', items: [{ ...DHIKR_DB.common[3], count: 1000 }] },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  count: 0,
+  mode: 'up',
+  target: null,
+  currentDhikr: DHIKR_DB.common[0],
+  seqItems: [],
+  seqDir: 'up',
+  seqActive: false,
+  seqIndex: 0,
+  seqCounts: [],
+  goalTab: 'daily',
+  pendingGoalDhikr: null,
+  pickerContext: 'counter',
+  pickerCat: 'common',
+  libCat: 'common',
+  // Temp seq being built from counter "Add Dhikr"
+  tempSeqItems: [],
+};
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+function save() {
+  try {
+    localStorage.setItem('tasbih_v3', JSON.stringify({
+      count: state.count, mode: state.mode, target: state.target,
+      currentDhikr: state.currentDhikr, seqItems: state.seqItems, seqDir: state.seqDir,
+    }));
+  } catch(e) {}
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('tasbih_v3') || '{}');
+    if (d.count != null) state.count = d.count;
+    if (d.mode) state.mode = d.mode;
+    if (d.target) state.target = d.target;
+    if (d.currentDhikr) state.currentDhikr = d.currentDhikr;
+    if (d.seqItems) state.seqItems = d.seqItems;
+    if (d.seqDir) state.seqDir = d.seqDir;
+  } catch(e) {}
+}
+
+function getHistory() { try { return JSON.parse(localStorage.getItem('tasbih_history')||'[]'); } catch(e){return[];} }
+function setHistory(h) { localStorage.setItem('tasbih_history', JSON.stringify(h)); }
+function getGoals() { try { return JSON.parse(localStorage.getItem('tasbih_goals')||'[]'); } catch(e){return[];} }
+function setGoals(g) { localStorage.setItem('tasbih_goals', JSON.stringify(g)); }
+function getUserPresets() { try { return JSON.parse(localStorage.getItem('tasbih_presets')||'[]'); } catch(e){return[];} }
+function setUserPresets(p) { localStorage.setItem('tasbih_presets', JSON.stringify(p)); }
+function getTotalCounts() { try { return JSON.parse(localStorage.getItem('tasbih_totals')||'{}'); } catch(e){return{};} }
+function addToTotal(latin, n) {
+  if (!n) return;
+  const t = getTotalCounts(); t[latin] = (t[latin]||0) + n;
+  localStorage.setItem('tasbih_totals', JSON.stringify(t));
+}
+
+// ============================================================
+// NAVIGATION — closes modals, protects work-in-progress
+// ============================================================
+function goTo(screen) {
+  // Check for active work-in-progress
+  const goalInProgress = document.getElementById('modal-goal').classList.contains('open')
+    && (state.pendingGoalDhikr || document.getElementById('goal-count').value);
+  const seqInProgress = document.getElementById('modal-add-to-seq').classList.contains('open')
+    && state.tempSeqItems.length > 1;
+
+  if (goalInProgress || seqInProgress) {
+    const what = goalInProgress ? 'your new goal' : 'your sequence';
+    showConfirm(
+      'Leave without saving?',
+      `You're still creating ${what}. Switching tabs will close it. Continue?`,
+      () => { _doGoTo(screen); }
+    );
+  } else {
+    _doGoTo(screen);
+  }
+}
+
+function _doGoTo(screen) {
+  closeAllModals();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  document.getElementById('nav-' + screen).classList.add('active');
+  if (screen === 'history') renderHistory();
+  if (screen === 'goals') renderGoals();
+  if (screen === 'library') renderLibrary();
+  if (screen === 'sequence') renderSeqItems();
+}
+
+// ============================================================
+// COUNTER
+// ============================================================
+function updateCounterDisplay() {
+  const el = document.getElementById('counter-number');
+  // In countdown mode, display remaining; in up mode display taps
+  const displayVal = (state.mode === 'down' && state.target != null)
+    ? Math.max(0, state.target - state.count)
+    : state.count;
+  el.textContent = displayVal;
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+  setTimeout(() => el.classList.remove('pop'), 150);
+  updateTargetBar();
+  updateRounds();
+  save();
+}
+
+function updateRounds() {
+  const el = document.getElementById('counter-rounds');
+  if (state.target && state.target > 0 && state.count > 0) {
+    const rounds = Math.floor(state.count / state.target);
+    el.textContent = rounds > 0 ? `${rounds} round${rounds>1?'s':''} complete` : '';
+  } else {
+    el.textContent = '';
+  }
+}
+
+function updateTargetBar() {
+  const fill = document.getElementById('target-fill');
+  const label = document.getElementById('target-label');
+  if (state.target) {
+    const displayCount = state.mode === 'down' ? Math.max(0, state.target - state.count) : state.count;
+    const pct = state.mode === 'down'
+      ? Math.min(100, (state.count / state.target) * 100)
+      : Math.min(100, (state.count / state.target) * 100);
+    fill.style.width = pct + '%';
+    label.textContent = state.mode === 'down'
+      ? `${Math.max(0, state.target - state.count)} / ${state.target}`
+      : `${state.count} / ${state.target}`;
+  } else {
+    fill.style.width = '0%';
+    label.textContent = '';
+  }
+}
+
+function handleCounterTap(e) {
+  if (state.mode === 'up') {
+    state.count++;
+  } else {
+    // countdown: internal count tracks taps, display shows remaining
+    if (!state.target || state.count < state.target) state.count++;
+  }
+  updateCounterDisplay();
+  spawnRipple(e, document.getElementById('tap-area'));
+  // For milestone: in countdown mode trigger on remaining count
+  const displayVal = state.mode === 'down' && state.target
+    ? Math.max(0, state.target - state.count)
+    : state.count;
+  checkMilestone(displayVal);
+  updateGoalProgress(state.currentDhikr.latin, 1);
+  if (navigator.vibrate) navigator.vibrate(18);
+}
+
+function resetCounter() {
+  if (state.count > 0) {
+    addHistoryEntry(state.currentDhikr, state.count, 'counter');
+    addToTotal(state.currentDhikr.latin, state.count);
+  }
+  state.count = 0;
+  if (state.mode === 'down' && state.target) state.count = 0;
+  updateCounterDisplay();
+}
+
+function setContinue() {
+  const v = parseInt(document.getElementById('continue-input').value);
+  if (!isNaN(v) && v >= 0) {
+    state.count = v;
+    document.getElementById('continue-input').value = '';
+    document.getElementById('continue-input').blur();
+    updateCounterDisplay();
+  }
+}
+
+function setCounterDhikr(d) {
+  state.currentDhikr = d;
+  document.getElementById('counter-dhikr-arabic').textContent = d.arabic;
+  document.getElementById('counter-dhikr-latin').textContent = d.latin;
+  document.getElementById('tap-arabic').textContent = d.arabic;
+  document.getElementById('tap-latin').textContent = d.latin;
+  updateCounterDisplay();
+  save();
+}
+
+// "Add Dhikr" from counter — opens sequence builder seeded with current dhikr
+function addDhikrToSequence() {
+  state.tempSeqItems = [{ ...state.currentDhikr, count: state.target || 33 }];
+  renderSeqPreview();
+  openModal('modal-add-to-seq');
+}
+
+function renderSeqPreview() {
+  const el = document.getElementById('seq-preview-list');
+  el.innerHTML = state.tempSeqItems.map((item, i) => `
+    <div class="seq-item">
+      <div class="seq-item-num">${i+1}</div>
+      <div class="seq-item-info">
+        <div class="seq-item-arabic">${item.arabic}</div>
+        <div class="seq-item-latin">${item.latin}</div>
+      </div>
+      <div class="seq-item-count">${item.count}×</div>
+      <button class="seq-item-del" onclick="removeTempSeqItem(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function removeTempSeqItem(i) {
+  state.tempSeqItems.splice(i, 1);
+  renderSeqPreview();
+}
+
+function launchFromCounter() {
+  if (!state.tempSeqItems.length) return;
+  // If there was a count on current dhikr, preserve it
+  state.seqItems = state.tempSeqItems.map(x => ({...x}));
+  state.seqCounts = state.seqItems.map((item, i) => {
+    // First item gets current counter's count if it's the same dhikr
+    if (i === 0 && item.latin === state.currentDhikr.latin && state.count > 0) {
+      return state.mode === 'up' ? state.count : (state.target - state.count);
+    }
+    return 0;
+  });
+  closeAllModals();
+  setTimeout(() => {
+    goTo('sequence');
+    renderSeqItems();
+    // Start immediately
+    state.seqIndex = 0;
+    state.seqActive = true;
+    // Fast-forward past already-completed items from preserved count
+    while (state.seqIndex < state.seqItems.length && state.seqCounts[state.seqIndex] >= state.seqItems[state.seqIndex].count) {
+      state.seqIndex++;
+    }
+    if (state.seqIndex >= state.seqItems.length) {
+      completeSequence();
+    } else {
+      showSeqState('active');
+      renderSeqStep();
+    }
+  }, 250);
+}
+
+// Target modal
+function openTargetModal() {
+  // Reflect current mode in modal toggle
+  document.getElementById('tmode-up').classList.toggle('active', state.mode === 'up');
+  document.getElementById('tmode-down').classList.toggle('active', state.mode === 'down');
+  if (state.target) document.getElementById('target-input').value = state.target;
+  openModal('modal-target');
+}
+function setTargetMode(m) {
+  state.mode = m;
+  document.getElementById('tmode-up').classList.toggle('active', m === 'up');
+  document.getElementById('tmode-down').classList.toggle('active', m === 'down');
+}
+function setTargetQuick(n) { document.getElementById('target-input').value = n; }
+function applyTarget() {
+  const v = parseInt(document.getElementById('target-input').value);
+  if (!isNaN(v) && v > 0) {
+    state.target = v;
+    state.count = 0;
+    updateTargetBar();
+    closeAllModals();
+    updateCounterDisplay();
+    save();
+  }
+}
+function clearTarget() {
+  state.target = null;
+  state.mode = 'up';
+  updateTargetBar();
+  closeAllModals();
+  save();
+}
+
+// Milestones
+function checkMilestone(n) {
+  const ms = { 33:'٣٣', 66:'٦٦', 99:'٩٩', 100:'١٠٠', 200:'٢٠٠', 300:'٣٠٠', 500:'٥٠٠', 1000:'١٠٠٠' };
+  if (ms[n]) {
+    const el = document.getElementById('milestone-overlay');
+    document.getElementById('milestone-num').textContent = ms[n];
+    document.getElementById('milestone-word').textContent = (n === state.target) ? 'Target reached!' : 'Milestone';
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    if (navigator.vibrate) navigator.vibrate([40,30,40]);
+  }
+}
+
+// Ripple
+function spawnRipple(e, container) {
+  const rect = container.getBoundingClientRect();
+  const x = (e.clientX ?? rect.width/2) - rect.left;
+  const y = (e.clientY ?? rect.height/2) - rect.top;
+  const size = Math.max(rect.width, rect.height) * 0.7;
+  const r = document.createElement('span');
+  r.classList.add('ripple');
+  r.style.cssText = `width:${size}px;height:${size}px;left:${x-size/2}px;top:${y-size/2}px`;
+  container.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+}
+
+// ============================================================
+// DHIKR PICKER
+// ============================================================
+const CAT_LABELS = { common:'Common', morning:'Morning', evening:'Evening', afterPrayer:'After Prayer', names99:'99 Names' };
+
+function openDhikrPicker(ctx) {
+  state.pickerContext = ctx;
+  state.pickerCat = 'common';
+  // Clear custom fields
+  document.getElementById('custom-arabic').value = '';
+  document.getElementById('custom-latin').value = '';
+  document.getElementById('custom-meaning').value = '';
+  renderPickerTabs();
+  renderPickerList();
+  // Open picker — its z-index (900) puts it above all other modals (810-820)
+  openModal('modal-dhikr-picker');
+}
+
+function openDhikrPickerForGoal() {
+  openDhikrPicker('goal');
+}
+
+function renderPickerTabs() {
+  document.getElementById('picker-cat-tabs').innerHTML = Object.entries(CAT_LABELS).map(([k,v]) =>
+    `<div class="cat-tab${state.pickerCat===k?' active':''}" onclick="setPickerCat('${k}')">${v}</div>`
+  ).join('');
+}
+function setPickerCat(cat) {
+  state.pickerCat = cat; renderPickerTabs(); renderPickerList();
+}
+function renderPickerList() {
+  document.getElementById('picker-dhikr-list').innerHTML = DHIKR_DB[state.pickerCat].map((d,i) =>
+    `<div class="dhikr-item" onclick="selectDhikr(${i})">
+      <div class="dhikr-item-text">
+        <div class="dhikr-item-arabic">${d.arabic}</div>
+        <div class="dhikr-item-latin">${d.latin}</div>
+        ${d.meaning ? `<div class="dhikr-item-meaning">${d.meaning}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+function selectDhikr(i) {
+  const d = DHIKR_DB[state.pickerCat][i];
+  const ctx = state.pickerContext;
+  closeModal('modal-dhikr-picker');
+  setTimeout(() => {
+    if (ctx === 'counter') {
+      setCounterDhikr(d); goTo('counter');
+    } else if (ctx === 'sequence') {
+      const cnt = parseInt(document.getElementById('seq-add-count').value) || 33;
+      state.seqItems.push({ ...d, count: cnt }); renderSeqItems();
+    } else if (ctx === 'addseq') {
+      const cnt = parseInt(document.getElementById('seq-preview-count').value) || 33;
+      state.tempSeqItems.push({ ...d, count: cnt }); renderSeqPreview();
+      openModal('modal-add-to-seq');
+    } else if (ctx === 'goal') {
+      state.pendingGoalDhikr = d;
+      document.getElementById('goal-dhikr-display').textContent = `${d.arabic} · ${d.latin}`;
+      // goal modal stays open underneath, just ensure it's visible
+      openModal('modal-goal');
+    }
+  }, 180);
+}
+
+function addCustomDhikr() {
+  const arabic = document.getElementById('custom-arabic').value.trim();
+  const latin = document.getElementById('custom-latin').value.trim();
+  const meaning = document.getElementById('custom-meaning').value.trim();
+  if (!latin) return;
+  const d = { arabic: arabic || latin, latin, meaning };
+  const ctx = state.pickerContext;
+  closeModal('modal-dhikr-picker');
+  setTimeout(() => {
+    if (ctx === 'counter') { setCounterDhikr(d); }
+    else if (ctx === 'sequence') {
+      const cnt = parseInt(document.getElementById('seq-add-count').value)||33;
+      state.seqItems.push({...d,count:cnt}); renderSeqItems();
+    } else if (ctx === 'addseq') {
+      const cnt = parseInt(document.getElementById('seq-preview-count').value)||33;
+      state.tempSeqItems.push({...d,count:cnt}); renderSeqPreview();
+      openModal('modal-add-to-seq');
+    } else if (ctx === 'goal') {
+      state.pendingGoalDhikr = d;
+      document.getElementById('goal-dhikr-display').textContent = `${d.arabic} · ${d.latin}`;
+      openModal('modal-goal');
+    }
+  }, 180);
+}
+
+// ============================================================
+// LIBRARY
+// ============================================================
+function renderLibrary() {
+  const cats = Object.entries(CAT_LABELS);
+  document.getElementById('lib-cat-tabs').innerHTML = cats.map(([k,v]) =>
+    `<div class="cat-tab${state.libCat===k?' active':''}" onclick="setLibCat('${k}')">${v}</div>`
+  ).join('');
+  const query = (document.getElementById('lib-search')?.value||'').toLowerCase();
+  const items = query
+    ? Object.values(DHIKR_DB).flat().filter(d => d.latin.toLowerCase().includes(query) || d.meaning?.toLowerCase().includes(query) || d.arabic.includes(query))
+    : DHIKR_DB[state.libCat];
+  document.getElementById('lib-grid').innerHTML = items.map(d => `
+    <div class="lib-item">
+      <div class="lib-item-body">
+        <div class="lib-item-arabic">${d.arabic}</div>
+        <div class="lib-item-latin">${d.latin}</div>
+        ${d.meaning ? `<div class="lib-item-meaning">${d.meaning}</div>` : ''}
+      </div>
+      <div class="lib-item-actions">
+        <button class="lib-btn-count" onclick='countFromLib(${JSON.stringify(d)})'>Count</button>
+        <button class="lib-btn-seq" onclick='addToSeqFromLib(${JSON.stringify(d)})'>+ Seq</button>
+      </div>
+    </div>
+  `).join('');
+}
+function setLibCat(cat) { state.libCat = cat; renderLibrary(); }
+function countFromLib(d) { setCounterDhikr(d); goTo('counter'); }
+function addToSeqFromLib(d) { state.seqItems.push({...d, count:33}); renderSeqItems(); goTo('sequence'); }
+
+// ============================================================
+// SEQUENCE
+// ============================================================
+function setSeqDir(d) {
+  state.seqDir = d;
+  document.getElementById('seqdir-up').classList.toggle('active', d==='up');
+  document.getElementById('seqdir-down').classList.toggle('active', d==='down');
+  save();
+}
+
+function renderSeqItems() {
+  const el = document.getElementById('seq-items-list');
+  if (!state.seqItems.length) {
+    el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-dim);font-size:13px">No dhikr added yet.<br>Choose a preset or add below.</div>`;
+    return;
+  }
+  el.innerHTML = state.seqItems.map((item, i) => `
+    <div class="seq-item">
+      <div class="seq-item-num">${i+1}</div>
+      <div class="seq-item-info">
+        <div class="seq-item-arabic">${item.arabic}</div>
+        <div class="seq-item-latin">${item.latin}</div>
+      </div>
+      <div class="seq-item-count">${item.count}×</div>
+      <button class="seq-item-del" onclick="removeSeqItem(${i})">×</button>
+    </div>
+  `).join('');
+}
+function removeSeqItem(i) { state.seqItems.splice(i,1); renderSeqItems(); }
+function clearSequence() { state.seqItems = []; renderSeqItems(); }
+
+function renderPresets() {
+  const all = [...PRESETS_BUILTIN, ...getUserPresets()];
+  document.getElementById('preset-chips').innerHTML = all.map((p,i) =>
+    `<button class="preset-chip" onclick="loadPreset(${i})">${p.name}</button>`
+  ).join('');
+}
+function loadPreset(i) {
+  const all = [...PRESETS_BUILTIN, ...getUserPresets()];
+  state.seqItems = all[i].items.map(x=>({...x}));
+  renderSeqItems();
+}
+function openSavePresetModal() {
+  if (!state.seqItems.length) return;
+  openModal('modal-save-preset');
+}
+function savePreset() {
+  const name = document.getElementById('preset-name-input').value.trim();
+  if (!name) return;
+  const presets = getUserPresets();
+  presets.push({ name, items: state.seqItems.map(x=>({...x})) });
+  setUserPresets(presets);
+  renderPresets();
+  closeAllModals();
+  document.getElementById('preset-name-input').value = '';
+}
+
+function startSequence() {
+  if (!state.seqItems.length) return;
+  state.seqIndex = 0;
+  state.seqCounts = state.seqItems.map(() => 0);
+  state.seqActive = true;
+  showSeqState('active');
+  renderSeqStep();
+}
+
+function showSeqState(s) {
+  ['idle','active','done'].forEach(k => {
+    document.getElementById('seq-' + k).style.display = k === s ? 'flex' : 'none';
+  });
+}
+
+function renderSeqStep() {
+  const items = state.seqItems;
+  const i = state.seqIndex;
+  if (i >= items.length) { completeSequence(); return; }
+  const item = items[i];
+
+  // Segmented progress bar
+  const bar = document.getElementById('seq-progress-bar');
+  bar.innerHTML = items.map((_,j) => `<div class="seq-seg${j<i?' done':j===i?' current':''}"><div class="seq-seg-fill" id="seg-fill-${j}" style="width:${j<i?100:j===i?Math.min(100,(state.seqCounts[j]||0)/items[j].count*100):0}%"></div></div>`).join('');
+
+  document.getElementById('seq-active-label').textContent = `Dhikr ${i+1} of ${items.length}`;
+  document.getElementById('seq-active-name').textContent = `${item.arabic} · ${item.latin}`;
+  document.getElementById('seq-tap-arabic').textContent = item.arabic;
+  document.getElementById('seq-tap-latin').textContent = item.latin;
+  updateSeqCountDisplay();
+}
+
+function updateSeqCountDisplay() {
+  const item = state.seqItems[state.seqIndex];
+  const done = state.seqCounts[state.seqIndex] || 0;
+  const display = state.seqDir === 'down' ? Math.max(0, item.count - done) : done;
+
+  const countEl = document.getElementById('seq-count-big');
+  countEl.textContent = display;
+  countEl.classList.remove('pop');
+  void countEl.offsetWidth;
+  countEl.classList.add('pop');
+  setTimeout(() => countEl.classList.remove('pop'), 150);
+
+  // Progress label: always shows done / total
+  document.getElementById('seq-progress-label').textContent = `${done} / ${item.count}`;
+
+  // Update live fill on current segment
+  const fillEl = document.getElementById(`seg-fill-${state.seqIndex}`);
+  if (fillEl) {
+    const pct = Math.min(100, (done / item.count) * 100);
+    fillEl.style.width = pct + '%';
+  }
+}
+
+function handleSeqTap(e) {
+  if (state.seqIndex >= state.seqItems.length) return;
+  state.seqCounts[state.seqIndex]++;
+  if (navigator.vibrate) navigator.vibrate(18);
+  spawnRipple(e, document.getElementById('seq-tap-area'));
+  const item = state.seqItems[state.seqIndex];
+  if (state.seqCounts[state.seqIndex] >= item.count) {
+    if (navigator.vibrate) navigator.vibrate([40,30,40,30,40]);
+    state.seqIndex++;
+    if (state.seqIndex >= state.seqItems.length) completeSequence();
+    else setTimeout(() => renderSeqStep(), 300);
+  } else {
+    updateSeqCountDisplay();
+  }
+}
+
+function skipSeqItem() {
+  state.seqIndex++;
+  if (state.seqIndex >= state.seqItems.length) completeSequence();
+  else renderSeqStep();
+}
+
+function restartCurrentSeqItem() {
+  state.seqCounts[state.seqIndex] = 0;
+  updateSeqCountDisplay();
+}
+
+function restartAllSeq() {
+  state.seqCounts = state.seqItems.map(() => 0);
+  state.seqIndex = 0;
+  renderSeqStep();
+}
+
+function endSequence() { completeSequence(); }
+
+function completeSequence() {
+  state.seqActive = false;
+  const summaryEl = document.getElementById('seq-done-summary');
+  summaryEl.innerHTML = state.seqItems.map((item, i) => {
+    const done = state.seqCounts[i] || 0;
+    addHistoryEntry(item, done, 'sequence');
+    addToTotal(item.latin, done);
+    updateGoalProgress(item.latin, done);
+    return `<div class="seq-done-row">
+      <div>
+        <div class="seq-done-row-arabic">${item.arabic}</div>
+        <div class="seq-done-row-name">${item.latin}</div>
+      </div>
+      <div class="seq-done-row-count">${done}</div>
+    </div>`;
+  }).join('');
+  showSeqState('done');
+  save();
+}
+
+function resetSequence() {
+  state.seqCounts = []; state.seqIndex = 0; state.seqActive = false;
+  showSeqState('idle'); renderSeqItems();
+}
+
+// ============================================================
+// GOALS
+// ============================================================
+function setGoalTab(t) {
+  state.goalTab = t;
+  ['daily','weekly','monthly'].forEach(k => document.getElementById('gtab-'+k).classList.toggle('active', k===t));
+  renderGoals();
+}
+function renderGoals() {
+  const goals = getGoals().filter(g => g.period === state.goalTab);
+  const el = document.getElementById('goals-list');
+  if (!goals.length) {
+    el.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-dim);font-size:13px;line-height:1.7">No ${state.goalTab} goals yet.<br>Add one below.</div>`;
+    return;
+  }
+  el.innerHTML = goals.map(g => {
+    const pct = Math.min(100, Math.round((g.done||0) / g.target * 100));
+    return `<div class="goal-card">
+      <div class="goal-card-top">
+        <div>
+          <div class="goal-card-arabic">${g.arabic}</div>
+          <div class="goal-card-latin">${g.latin}</div>
+        </div>
+        <div class="goal-card-target">
+          <span class="goal-card-target-num">${g.target}</span>
+          per ${g.period}
+        </div>
+      </div>
+      <div class="goal-progress-track"><div class="goal-progress-fill" style="width:${pct}%"></div></div>
+      <div class="goal-card-bottom">
+        <div class="goal-card-done">${g.done||0} done · ${pct}%</div>
+        <button class="btn btn-ghost" style="font-size:10px;color:var(--red)" onclick="deleteGoal('${g.id}')">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openGoalModal() {
+  state.pendingGoalDhikr = null;
+  document.getElementById('goal-dhikr-display').textContent = 'Select Dhikr…';
+  document.getElementById('goal-count').value = '';
+  openModal('modal-goal');
+}
+function setGoalCountQuick(n) { document.getElementById('goal-count').value = n; }
+function saveGoal() {
+  if (!state.pendingGoalDhikr) return;
+  const count = parseInt(document.getElementById('goal-count').value);
+  if (!count || count < 1) return;
+  const period = document.getElementById('goal-period').value;
+  const goals = getGoals();
+  goals.push({ id: Date.now().toString(), ...state.pendingGoalDhikr, target: count, period, done: 0, created: new Date().toISOString() });
+  setGoals(goals);
+  closeAllModals();
+  renderGoals();
+}
+function deleteGoal(id) { setGoals(getGoals().filter(g => g.id !== id)); renderGoals(); }
+function updateGoalProgress(latin, added) {
+  if (!added) return;
+  const goals = getGoals(); let changed = false;
+  goals.forEach(g => { if (g.latin === latin) { g.done = (g.done||0) + added; changed = true; } });
+  if (changed) setGoals(goals);
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function addHistoryEntry(dhikr, count, type) {
+  if (!count) return;
+  const h = getHistory();
+  h.unshift({ arabic: dhikr.arabic, latin: dhikr.latin, count, type, date: new Date().toISOString() });
+  setHistory(h.slice(0, 200));
+}
+function renderHistory() {
+  const h = getHistory();
+  const totals = getTotalCounts();
+  const totalSum = Object.values(totals).reduce((a,b)=>a+b,0);
+  const days = h.length ? Math.ceil((Date.now() - new Date(h[h.length-1].date)) / 86400000) : 0;
+  document.getElementById('history-summary').innerHTML = `
+    <div class="hist-stat"><span class="hist-stat-num">${totalSum.toLocaleString()}</span><span class="hist-stat-label">Total</span></div>
+    <div class="hist-stat"><span class="hist-stat-num">${h.length}</span><span class="hist-stat-label">Sessions</span></div>
+    <div class="hist-stat"><span class="hist-stat-num">${days||'—'}</span><span class="hist-stat-label">Days active</span></div>
+  `;
+  const el = document.getElementById('history-list');
+  if (!h.length) {
+    el.innerHTML = `<div class="hist-empty"><span class="hist-empty-icon">ذِكْر</span>Your dhikr history will appear here.<br>Begin counting to leave a trace of remembrance.</div>`;
+    return;
+  }
+  el.innerHTML = h.map(item => {
+    const d = new Date(item.date);
+    const dateStr = d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    const timeStr = d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    return `<div class="hist-item">
+      <div class="hist-item-top">
+        <div>
+          <div class="hist-item-arabic">${item.arabic}</div>
+          <div class="hist-item-latin">${item.latin}</div>
+        </div>
+        <div class="hist-item-count">${item.count}</div>
+      </div>
+      <div class="hist-item-bottom">
+        <div class="hist-item-date">${dateStr} · ${timeStr}</div>
+        <div class="hist-item-type">${item.type}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function confirmClearHistory() {
+  showConfirm(
+    'Clear History?',
+    'This will permanently remove all session history and lifetime totals. This cannot be undone.',
+    () => {
+      setHistory([]);
+      localStorage.removeItem('tasbih_totals');
+      renderHistory();
+    }
+  );
+}
+
+// ============================================================
+// CONFIRM DIALOG (replaces browser confirm())
+// ============================================================
+let _confirmCallback = null;
+function showConfirm(title, msg, onOk) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  _confirmCallback = onOk;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  _confirmCallback = null;
+}
+document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+  closeConfirm();
+  if (_confirmCallback) _confirmCallback();
+});
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeAllModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); }
+
+// Tapping the dark overlay behind a modal closes it
+// But if closing dhikr picker when goal/addseq modal is also open, re-surface parent
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target !== overlay) return;
+    const id = overlay.id;
+    closeModal(id);
+    // If picker was closed, re-surface parent modal if still open
+    if (id === 'modal-dhikr-picker') {
+      if (state.pickerContext === 'goal' && state.pendingGoalDhikr !== undefined) {
+        openModal('modal-goal');
+      } else if (state.pickerContext === 'addseq') {
+        openModal('modal-add-to-seq');
+      }
+    }
+  });
+});
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  load();
+  updateCounterDisplay();
+  setCounterDhikr(state.currentDhikr);
+  setSeqDir(state.seqDir);
+  renderSeqItems();
+  renderPresets();
+  renderLibrary();
+  document.getElementById('continue-input').addEventListener('keydown', e => { if(e.key==='Enter') setContinue(); });
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+}
+
+init();
+</script>
+
+</body>
+</html>
