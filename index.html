@@ -346,32 +346,6 @@ animation: ripple-anim 0.55s ease-out forwards; pointer-events: none;
 }
 @keyframes ripple-anim { to { transform: scale(5); opacity: 0; } }
 
-.counter-bottom {
-padding: 10px 14px; border-top: 1px solid rgba(201,168,76,0.14);
-display: flex; align-items: center; gap: 10px;
-flex-shrink: 0; background: #111e16;
-}
-.counter-bottom label {
-font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-color: #5a503a; -webkit-text-fill-color: #5a503a;
-white-space: nowrap; flex-shrink: 0;
-}
-#continue-input {
-flex: 1; font-family: ‘Amiri’, serif; font-size: 18px;
-text-align: center; padding: 8px 10px;
-background: #0b1610 !important; color: #ede4cc !important;
--webkit-text-fill-color: #ede4cc !important;
-border: 1px solid rgba(201,168,76,0.14); border-radius: 8px;
-}
-#btn-continue-set {
-background: rgba(201,168,76,0.12) !important;
-border: 1px solid rgba(201,168,76,0.14) !important;
-color: #c9a84c !important; -webkit-text-fill-color: #c9a84c !important;
-font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
-padding: 9px 14px; border-radius: 7px; cursor: pointer;
-white-space: nowrap; flex-shrink: 0; font-family: ‘Outfit’, sans-serif;
-}
-
 /* Milestone overlay */
 #milestone-overlay {
 position: fixed; inset: 0; z-index: 1800;
@@ -969,12 +943,6 @@ background: #182b1e !important; color: #ede4cc !important;
 -webkit-text-fill-color: #ede4cc !important;
 }
 
-/* Continue from input */
-#continue-input {
-background: #0b1610 !important; color: #ede4cc !important;
--webkit-text-fill-color: #ede4cc !important;
-}
-
 /* Target input */
 #target-input {
 background: #182b1e !important; color: #ede4cc !important;
@@ -1029,13 +997,6 @@ background: #182b1e !important; color: #ede4cc !important;
     <div class="tap-hint">tap anywhere</div>
   </div>
 </button>
-
-<!-- BOTTOM: Continue from -->
-<div class="counter-bottom">
-  <label>Continue from</label>
-  <input type="number" id="continue-input" placeholder="0" inputmode="numeric" min="0">
-  <button id="btn-continue-set" onclick="setContinue()">Set</button>
-</div>
 ```
 
   </div>
@@ -1069,15 +1030,14 @@ background: #182b1e !important; color: #ede4cc !important;
             </div>
             <input type="number" class="seq-add-count" id="seq-add-count" placeholder="33" min="1" inputmode="numeric" value="33">
           </div>
-          <button class="btn btn-gold" style="width:100%;margin-top:4px" onclick="startSequence()">Begin Session</button>
-        </div>
-      </div>
-      <!-- Direction toggle at bottom of idle -->
-      <div class="seq-direction-row">
-        <span class="seq-direction-label">Count direction</span>
-        <div class="seq-dir-toggle">
-          <button class="seq-dir-btn active" id="seqdir-up" onclick="setSeqDir('up')">Up</button>
-          <button class="seq-dir-btn" id="seqdir-down" onclick="setSeqDir('down')">Down</button>
+          <div class="seq-direction-row" style="padding:0 0 14px 0;border-top:none;margin-bottom:4px;">
+            <span class="seq-direction-label">Count direction</span>
+            <div class="seq-dir-toggle">
+              <button class="seq-dir-btn active" id="seqdir-up" onclick="setSeqDir('up')">Up</button>
+              <button class="seq-dir-btn" id="seqdir-down" onclick="setSeqDir('down')">Down</button>
+            </div>
+          </div>
+          <button class="btn btn-gold" style="width:100%" onclick="startSequence()">Begin Session</button>
         </div>
       </div>
     </div>
@@ -1692,15 +1652,7 @@ function resetCounter() {
   updateCounterDisplay();
 }
 
-function setContinue() {
-  const v = parseInt(document.getElementById('continue-input').value);
-  if (!isNaN(v) && v >= 0) {
-    state.count = v;
-    document.getElementById('continue-input').value = '';
-    document.getElementById('continue-input').blur();
-    updateCounterDisplay();
-  }
-}
+// continue-from removed
 
 function setCounterDhikr(d) {
   state.currentDhikr = d;
@@ -2296,7 +2248,7 @@ function init() {
   renderSeqItems();
   renderPresets();
   renderLibrary();
-  document.getElementById('continue-input').addEventListener('keydown', e => { if(e.key==='Enter') setContinue(); });
+
   document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
 }
 
