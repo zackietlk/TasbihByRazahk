@@ -691,8 +691,8 @@ color: #e8c97a !important; -webkit-text-fill-color: #e8c97a !important;
 }
 
 .seq-active-bottom {
-padding: 10px 14px; border-top: 1px solid rgba(201,168,76,0.14);
-display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap;
+padding: 8px 14px; border-bottom: 1px solid rgba(201,168,76,0.14);
+display: flex; gap: 8px; flex-shrink: 0; flex-wrap: nowrap;
 background: #0b1610;
 }
 .seq-active-bottom button {
@@ -1053,6 +1053,12 @@ background: #182b1e !important; color: #ede4cc !important;
     </div>
     <div class="seq-active-name" id="seq-active-name"></div>
   </div>
+  <div class="seq-active-bottom">
+    <button onclick="restartCurrentSeqItem()">Restart</button>
+    <button onclick="restartAllSeq()">Restart All</button>
+    <button onclick="skipSeqItem()">Skip</button>
+    <button class="end-btn" onclick="endSequence()">End</button>
+  </div>
   <button class="seq-tap-area" id="seq-tap-area" onclick="handleSeqTap(event)">
     <div class="tap-circle">
       <div class="seq-count-big" id="seq-count-big">0</div>
@@ -1061,12 +1067,6 @@ background: #182b1e !important; color: #ede4cc !important;
       <div class="tap-hint">tap anywhere</div>
     </div>
   </button>
-  <div class="seq-active-bottom">
-    <button onclick="restartCurrentSeqItem()">Restart Current</button>
-    <button onclick="restartAllSeq()">Restart All</button>
-    <button onclick="skipSeqItem()">Skip</button>
-    <button class="btn btn-outline" class="end-btn" onclick="endSequence()">End</button>
-  </div>
 </div>
 
 <!-- DONE STATE -->
@@ -2020,6 +2020,8 @@ function handleSeqTap(e) {
   if (navigator.vibrate) navigator.vibrate(18);
   spawnRipple(e, document.getElementById('seq-tap-area'));
   const item = state.seqItems[state.seqIndex];
+  // Update goals on every tap, same as counter
+  updateGoalProgress(item.latin, 1);
   if (state.seqCounts[state.seqIndex] >= item.count) {
     if (navigator.vibrate) navigator.vibrate([40,30,40,30,40]);
     state.seqIndex++;
@@ -2056,7 +2058,7 @@ function completeSequence() {
     const done = state.seqCounts[i] || 0;
     addHistoryEntry(item, done, 'sequence');
     addToTotal(item.latin, done);
-    updateGoalProgress(item.latin, done);
+    // Goals already updated per-tap during session — no double count here
     return `<div class="seq-done-row">
       <div>
         <div class="seq-done-row-arabic">${item.arabic}</div>
