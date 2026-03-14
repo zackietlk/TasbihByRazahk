@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Tasbih — Digital Dhikr</title>
+<title>Tasbeeh — Daily Dhikr Counter</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
@@ -954,8 +954,325 @@ background: #182b1e !important; color: #ede4cc !important;
 background: #182b1e !important; color: #ede4cc !important;
 -webkit-text-fill-color: #ede4cc !important;
 }
-</style>
 
+/* ============================================================
+ONBOARDING
+============================================================ */
+#onboarding {
+position: fixed; inset: 0; z-index: 9000;
+background: #0b1610;
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+padding: 0;
+transition: opacity 0.5s ease;
+}
+#onboarding.hidden { opacity: 0; pointer-events: none; }
+
+.ob-slides {
+width: 100%; height: 100%;
+display: flex; flex-direction: column;
+overflow: hidden; position: relative;
+}
+
+.ob-slide {
+position: absolute; inset: 0;
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+padding: 48px 32px 40px;
+opacity: 0; pointer-events: none;
+transition: opacity 0.4s ease, transform 0.4s ease;
+transform: translateX(40px);
+}
+.ob-slide.active {
+opacity: 1; pointer-events: all; transform: translateX(0);
+}
+.ob-slide.past {
+opacity: 0; transform: translateX(-40px);
+}
+
+/* Slide 1 — Welcome */
+.ob-app-icon {
+width: 90px; height: 90px; border-radius: 22px;
+background: linear-gradient(135deg, #182b1e, #0b1610);
+border: 1.5px solid rgba(201,168,76,0.3);
+display: flex; align-items: center; justify-content: center;
+margin-bottom: 28px;
+box-shadow: 0 0 60px rgba(201,168,76,0.1);
+}
+.ob-app-icon-arabic {
+font-family: ‘Amiri’, serif; font-size: 36px;
+color: #c9a84c !important; -webkit-text-fill-color: #c9a84c !important;
+padding-top: 4px;
+}
+.ob-app-name {
+font-family: ‘Amiri’, serif; font-size: 38px;
+color: #e8c97a !important; -webkit-text-fill-color: #e8c97a !important;
+text-align: center; margin-bottom: 12px;
+text-shadow: 0 0 40px rgba(201,168,76,0.2);
+}
+.ob-tagline {
+font-size: 15px; letter-spacing: 1px;
+color: #9e8f6e !important; -webkit-text-fill-color: #9e8f6e !important;
+text-align: center; line-height: 1.6;
+margin-bottom: 32px;
+}
+.ob-bismillah {
+font-family: ‘Amiri’, serif; font-size: 22px;
+color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+text-align: center; margin-top: 8px;
+padding-top: 4px;
+}
+
+/* Slide 2 & 3 — Feature slides */
+.ob-slide-title {
+font-family: ‘Amiri’, serif; font-size: 28px;
+color: #c9a84c !important; -webkit-text-fill-color: #c9a84c !important;
+text-align: center; margin-bottom: 10px;
+}
+.ob-slide-sub {
+font-size: 13px; color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+text-align: center; letter-spacing: 2px; text-transform: uppercase;
+margin-bottom: 28px;
+}
+.ob-features {
+width: 100%; display: flex; flex-direction: column; gap: 14px;
+margin-bottom: 24px;
+}
+.ob-feature {
+background: #111e16; border: 1px solid rgba(201,168,76,0.14);
+border-radius: 14px; padding: 16px 18px;
+display: flex; align-items: flex-start; gap: 14px;
+}
+.ob-feature-icon {
+width: 36px; height: 36px; border-radius: 10px;
+background: rgba(201,168,76,0.08);
+border: 1px solid rgba(201,168,76,0.15);
+display: flex; align-items: center; justify-content: center;
+flex-shrink: 0;
+}
+.ob-feature-icon svg { stroke: #c9a84c; }
+.ob-feature-body { flex: 1; }
+.ob-feature-name {
+font-size: 14px; font-weight: 500;
+color: #ede4cc !important; -webkit-text-fill-color: #ede4cc !important;
+margin-bottom: 4px;
+}
+.ob-feature-desc {
+font-size: 12px; color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+line-height: 1.5;
+}
+
+/* Slide 3 — Ready */
+.ob-ready-arabic {
+font-family: ‘Amiri’, serif; font-size: 48px;
+color: #c9a84c !important; -webkit-text-fill-color: #c9a84c !important;
+text-align: center; margin-bottom: 16px;
+text-shadow: 0 0 40px rgba(201,168,76,0.2);
+padding-top: 6px;
+}
+.ob-ready-title {
+font-family: ‘Amiri’, serif; font-size: 28px;
+color: #e8c97a !important; -webkit-text-fill-color: #e8c97a !important;
+text-align: center; margin-bottom: 10px;
+}
+.ob-ready-sub {
+font-size: 13px; color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+text-align: center; line-height: 1.6; margin-bottom: 32px;
+max-width: 280px;
+}
+.ob-settings-hint {
+font-size: 11px; color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+text-align: center; line-height: 1.6;
+padding: 12px 16px;
+border: 1px solid rgba(201,168,76,0.1);
+border-radius: 10px; background: rgba(201,168,76,0.04);
+margin-bottom: 28px; max-width: 280px;
+}
+
+/* Onboarding nav */
+.ob-nav {
+position: absolute; bottom: 0; left: 0; right: 0;
+padding: 16px 24px calc(16px + env(safe-area-inset-bottom, 0px));
+display: flex; align-items: center; justify-content: space-between;
+gap: 16px;
+}
+.ob-dots {
+display: flex; gap: 6px; align-items: center;
+}
+.ob-dot {
+width: 6px; height: 6px; border-radius: 3px;
+background: #182b1e; border: 1px solid rgba(201,168,76,0.2);
+transition: all 0.3s ease;
+}
+.ob-dot.active {
+width: 20px; background: #c9a84c; border-color: #c9a84c;
+}
+.ob-btn-next {
+background: linear-gradient(135deg, #7a6030, #c9a84c) !important;
+color: #0b1610 !important; -webkit-text-fill-color: #0b1610 !important;
+font-weight: 600; font-size: 13px; letter-spacing: 1px;
+padding: 12px 28px; border-radius: 24px; border: none;
+font-family: ‘Outfit’, sans-serif; cursor: pointer;
+min-width: 100px;
+}
+.ob-btn-skip {
+background: transparent !important; border: none;
+color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+font-size: 12px; letter-spacing: 1px; font-family: ‘Outfit’, sans-serif;
+cursor: pointer; padding: 12px 4px;
+}
+
+/* ============================================================
+SETTINGS SCREEN
+============================================================ */
+#screen-settings {
+background: #0b1610;
+display: none; flex-direction: column;
+flex: 1; overflow: hidden;
+position: absolute; inset: 0;
+padding-bottom: var(–nav-h);
+}
+#screen-settings.active { display: flex; }
+
+.settings-header {
+padding: 20px 20px 16px;
+border-bottom: 1px solid rgba(201,168,76,0.14);
+display: flex; align-items: center; gap: 14px;
+flex-shrink: 0; background: #0b1610;
+}
+.settings-back {
+width: 34px; height: 34px; border-radius: 10px;
+background: #111e16 !important; border: 1px solid rgba(201,168,76,0.14) !important;
+display: flex; align-items: center; justify-content: center;
+cursor: pointer; flex-shrink: 0;
+}
+.settings-back svg { stroke: #c9a84c; }
+.settings-title {
+font-family: ‘Amiri’, serif; font-size: 22px;
+color: #c9a84c !important; -webkit-text-fill-color: #c9a84c !important;
+}
+
+.settings-section { padding: 16px 20px 0; }
+.settings-section-label {
+font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+margin-bottom: 10px;
+}
+.settings-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 24px; }
+.settings-row {
+background: #111e16; border: 1px solid rgba(201,168,76,0.1);
+padding: 15px 16px;
+display: flex; align-items: center; gap: 14px;
+cursor: pointer;
+}
+.settings-row:first-child { border-radius: 12px 12px 0 0; }
+.settings-row:last-child { border-radius: 0 0 12px 12px; }
+.settings-row:only-child { border-radius: 12px; }
+.settings-row:active { background: rgba(201,168,76,0.06); }
+.settings-row-icon {
+width: 32px; height: 32px; border-radius: 8px;
+display: flex; align-items: center; justify-content: center;
+flex-shrink: 0;
+}
+.settings-row-icon svg { width: 16px; height: 16px; }
+.settings-row-body { flex: 1; }
+.settings-row-title {
+font-size: 14px;
+color: #ede4cc !important; -webkit-text-fill-color: #ede4cc !important;
+}
+.settings-row-sub {
+font-size: 11px; color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+margin-top: 2px;
+}
+.settings-row-chevron {
+color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+font-size: 16px; flex-shrink: 0;
+}
+.settings-row.danger .settings-row-title {
+color: #c0544a !important; -webkit-text-fill-color: #c0544a !important;
+}
+.settings-row.danger .settings-row-icon svg { stroke: #c0544a; }
+
+/* Settings sub-screens (How to Use panels) */
+.settings-sub {
+display: none; flex-direction: column; height: 100%;
+}
+.settings-sub.active { display: flex; }
+
+/* How to use cards */
+.how-card {
+background: #111e16; border: 1px solid rgba(201,168,76,0.1);
+border-radius: 12px; padding: 16px; margin-bottom: 12px;
+}
+.how-card-title {
+font-family: ‘Amiri’, serif; font-size: 18px;
+color: #c9a84c !important; -webkit-text-fill-color: #c9a84c !important;
+margin-bottom: 8px;
+}
+.how-card-body {
+font-size: 13px; color: #9e8f6e !important; -webkit-text-fill-color: #9e8f6e !important;
+line-height: 1.7;
+}
+.how-card-body b {
+color: #ede4cc !important; -webkit-text-fill-color: #ede4cc !important;
+font-weight: 500;
+}
+
+/* Donate screen */
+.donate-wrap {
+padding: 40px 24px; display: flex; flex-direction: column;
+align-items: center; text-align: center;
+}
+.donate-arabic {
+font-family: ‘Amiri’, serif; font-size: 36px;
+color: #c9a84c !important; -webkit-text-fill-color: #c9a84c !important;
+margin-bottom: 16px; padding-top: 4px;
+}
+.donate-title {
+font-family: ‘Amiri’, serif; font-size: 22px;
+color: #e8c97a !important; -webkit-text-fill-color: #e8c97a !important;
+margin-bottom: 10px;
+}
+.donate-body {
+font-size: 13px; color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+line-height: 1.7; margin-bottom: 28px; max-width: 280px;
+}
+.donate-placeholder {
+background: #111e16; border: 1px solid rgba(201,168,76,0.14);
+border-radius: 12px; padding: 20px 24px; width: 100%;
+font-size: 13px; color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+line-height: 1.6;
+}
+
+/* About screen */
+.about-wrap { padding: 32px 24px; }
+.about-logo {
+width: 72px; height: 72px; border-radius: 18px;
+background: linear-gradient(135deg, #182b1e, #0b1610);
+border: 1.5px solid rgba(201,168,76,0.3);
+display: flex; align-items: center; justify-content: center;
+margin: 0 auto 20px;
+}
+.about-logo-arabic {
+font-family: ‘Amiri’, serif; font-size: 28px;
+color: #c9a84c !important; -webkit-text-fill-color: #c9a84c !important;
+padding-top: 4px;
+}
+.about-name {
+font-family: ‘Amiri’, serif; font-size: 26px;
+color: #e8c97a !important; -webkit-text-fill-color: #e8c97a !important;
+text-align: center; margin-bottom: 6px;
+}
+.about-version {
+font-size: 11px; color: #5a503a !important; -webkit-text-fill-color: #5a503a !important;
+text-align: center; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px;
+}
+.about-body {
+font-size: 13px; color: #9e8f6e !important; -webkit-text-fill-color: #9e8f6e !important;
+line-height: 1.8; text-align: center;
+}
+
+</style>
 </head>
 <body>
 <div id="app">
@@ -1165,6 +1482,10 @@ background: #182b1e !important; color: #ede4cc !important;
       <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
       <div class="nav-label">History</div>
     </div>
+    <div class="nav-item" onclick="goTo('settings')" id="nav-settings">
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      <div class="nav-label">Settings</div>
+    </div>
   </nav>
 
   <!-- ========== MILESTONE OVERLAY ========== -->
@@ -1327,6 +1648,264 @@ background: #182b1e !important; color: #ede4cc !important;
       </div>
     </div>
   </div>
+
+  <!-- ========== ONBOARDING ========== -->
+
+  <div id="onboarding">
+    <div class="ob-slides">
+
+```
+  <!-- Slide 1: Welcome -->
+  <div class="ob-slide active" id="ob-slide-0">
+    <div class="ob-app-icon">
+      <div class="ob-app-icon-arabic">تسبيح</div>
+    </div>
+    <div class="ob-app-name">Tasbeeh</div>
+    <div class="ob-tagline">Count. Remember Allah. Reflect.</div>
+    <div class="ob-bismillah">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+  </div>
+
+  <!-- Slide 2: Counter + Sequence + Library -->
+  <div class="ob-slide" id="ob-slide-1">
+    <div class="ob-slide-title">Your Dhikr Tools</div>
+    <div class="ob-slide-sub">Three ways to remember</div>
+    <div class="ob-features">
+      <div class="ob-feature">
+        <div class="ob-feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="ob-feature-body">
+          <div class="ob-feature-name">Counter</div>
+          <div class="ob-feature-desc">Tap the entire screen to count. Set a target, choose count up or down, change your dhikr anytime.</div>
+        </div>
+      </div>
+      <div class="ob-feature">
+        <div class="ob-feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </div>
+        <div class="ob-feature-body">
+          <div class="ob-feature-name">Sequence</div>
+          <div class="ob-feature-desc">Chain multiple adhkar in one session. Use presets like After Salah or build your own. The app guides you through each one.</div>
+        </div>
+      </div>
+      <div class="ob-feature">
+        <div class="ob-feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="ob-feature-body">
+          <div class="ob-feature-name">Library</div>
+          <div class="ob-feature-desc">Browse common adhkar, morning and evening remembrances, and all 99 Names of Allah with meanings.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Goals + History + Ready -->
+  <div class="ob-slide" id="ob-slide-2">
+    <div class="ob-ready-arabic">الحمد لله</div>
+    <div class="ob-ready-title">You're ready</div>
+    <div class="ob-ready-sub">Track your daily, weekly, and monthly goals. Your full history and lifetime count are always saved privately on your device.</div>
+    <div class="ob-settings-hint">For a deeper guide to each feature, go to <b style="-webkit-text-fill-color:#c9a84c;color:#c9a84c">Settings → How to Use</b> anytime.</div>
+  </div>
+
+</div><!-- .ob-slides -->
+
+<!-- Nav: dots + buttons -->
+<div class="ob-nav">
+  <button class="ob-btn-skip" id="ob-skip" onclick="obSkip()">Skip</button>
+  <div class="ob-dots">
+    <div class="ob-dot active" id="ob-dot-0"></div>
+    <div class="ob-dot" id="ob-dot-1"></div>
+    <div class="ob-dot" id="ob-dot-2"></div>
+  </div>
+  <button class="ob-btn-next" id="ob-next" onclick="obNext()">Next</button>
+</div>
+```
+
+  </div>
+
+  <!-- ========== SETTINGS SCREEN ========== -->
+
+  <div class="screen" id="screen-settings">
+    <!-- Main settings list -->
+    <div class="settings-sub active" id="settings-main">
+      <div class="settings-header">
+        <div class="screen-title" style="font-family:'Amiri',serif;font-size:22px;color:#c9a84c;-webkit-text-fill-color:#c9a84c">Settings</div>
+      </div>
+      <div class="screen-scroll">
+        <div class="settings-section">
+          <div class="settings-section-label">Help</div>
+          <div class="settings-list">
+            <div class="settings-row" onclick="openSettingsSub('how-to-use')">
+              <div class="settings-row-icon" style="background:rgba(201,168,76,0.08)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div class="settings-row-body">
+                <div class="settings-row-title">How to Use</div>
+                <div class="settings-row-sub">Guide for each mode</div>
+              </div>
+              <div class="settings-row-chevron">›</div>
+            </div>
+          </div>
+        </div>
+
+```
+    <div class="settings-section">
+      <div class="settings-section-label">Support</div>
+      <div class="settings-list">
+        <div class="settings-row" onclick="openSettingsSub('donate')">
+          <div class="settings-row-icon" style="background:rgba(201,168,76,0.08)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <div class="settings-row-body">
+            <div class="settings-row-title">Support / Donate</div>
+            <div class="settings-row-sub">Help keep Tasbeeh free</div>
+          </div>
+          <div class="settings-row-chevron">›</div>
+        </div>
+        <div class="settings-row" onclick="openSettingsSub('about')">
+          <div class="settings-row-icon" style="background:rgba(201,168,76,0.08)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="settings-row-body">
+            <div class="settings-row-title">About Tasbeeh</div>
+            <div class="settings-row-sub">Version 1.0</div>
+          </div>
+          <div class="settings-row-chevron">›</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">Languages</div>
+      <div class="settings-list">
+        <div class="settings-row">
+          <div class="settings-row-icon" style="background:rgba(201,168,76,0.08)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div class="settings-row-body">
+            <div class="settings-row-title">Language</div>
+            <div class="settings-row-sub">English — more languages coming soon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">Data</div>
+      <div class="settings-list">
+        <div class="settings-row danger" onclick="confirmClearAll()">
+          <div class="settings-row-icon" style="background:rgba(192,84,74,0.08)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c0544a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </div>
+          <div class="settings-row-body">
+            <div class="settings-row-title">Clear All Data</div>
+            <div class="settings-row-sub">Erase history, goals and counts</div>
+          </div>
+          <div class="settings-row-chevron" style="color:#c0544a;-webkit-text-fill-color:#c0544a">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- How to Use sub-screen -->
+<div class="settings-sub" id="settings-how-to-use">
+  <div class="settings-header">
+    <button class="settings-back" onclick="closeSettingsSub()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="settings-title">How to Use</div>
+  </div>
+  <div class="screen-scroll">
+    <div style="padding:16px 20px">
+      <div class="how-card">
+        <div class="how-card-title">Counter</div>
+        <div class="how-card-body">
+          <b>Tap anywhere</b> on the main circle to count. The number in the centre updates with every tap.<br><br>
+          Tap <b>Set Target</b> to choose a count goal and direction — count up towards a number or count down from it. The progress bar tracks your position in real time.<br><br>
+          Tap <b>Change Dhikr</b> to switch what you're reciting. Tap <b>Add Dhikr</b> to build a quick sequence starting from the counter.<br><br>
+          <b>Reset Count</b> saves the session to History and resets to zero.
+        </div>
+      </div>
+      <div class="how-card">
+        <div class="how-card-title">Sequence</div>
+        <div class="how-card-body">
+          Build a session with multiple adhkar in order. Choose a <b>preset</b> like After Salah, or tap <b>+ Add Dhikr</b> to build your own.<br><br>
+          Set the <b>count per dhikr</b> using the number field next to Add Dhikr. Set <b>Count Direction</b> before starting.<br><br>
+          Once running, the app moves to the next dhikr automatically when you finish. Use <b>Restart</b>, <b>Skip</b>, or <b>End</b> at any point.<br><br>
+          Save your custom sequences as <b>presets</b> to reuse them.
+        </div>
+      </div>
+      <div class="how-card">
+        <div class="how-card-title">Library</div>
+        <div class="how-card-body">
+          Browse adhkar by category — Common, Morning, Evening, After Prayer, and all <b>99 Names of Allah</b> with transliteration and meaning.<br><br>
+          Tap <b>Count</b> to go straight to the counter with that dhikr selected. Tap <b>+ Seq</b> to add it to your sequence builder.
+        </div>
+      </div>
+      <div class="how-card">
+        <div class="how-card-title">Goals</div>
+        <div class="how-card-body">
+          Set <b>daily, weekly, or monthly</b> targets for any dhikr. Tap <b>+ Add Goal</b>, select a dhikr, choose your period and target count.<br><br>
+          Goals update automatically as you count — in both Counter and Sequence mode. Progress is shown as a bar on each goal card.
+        </div>
+      </div>
+      <div class="how-card">
+        <div class="how-card-title">History</div>
+        <div class="how-card-body">
+          Every completed session is logged here automatically — the dhikr, count, date, and whether it was a counter or sequence session.<br><br>
+          Your <b>lifetime total</b>, number of sessions, and days active are shown at the top. All data stays privately on your device.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Donate sub-screen -->
+<div class="settings-sub" id="settings-donate">
+  <div class="settings-header">
+    <button class="settings-back" onclick="closeSettingsSub()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="settings-title">Support</div>
+  </div>
+  <div class="screen-scroll">
+    <div class="donate-wrap">
+      <div class="donate-arabic">جَزَاكَ ٱللَّٰهُ خَيْرًا</div>
+      <div class="donate-title">Jazakallahu Khayran</div>
+      <div class="donate-body">Tasbeeh is free and will always remain free. If it has been of benefit to your remembrance of Allah, a donation helps keep it maintained and ad-free.</div>
+      <div class="donate-placeholder">Donation link coming soon.<br><br>May Allah accept your dhikr and reward you abundantly.</div>
+    </div>
+  </div>
+</div>
+
+<!-- About sub-screen -->
+<div class="settings-sub" id="settings-about">
+  <div class="settings-header">
+    <button class="settings-back" onclick="closeSettingsSub()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="settings-title">About</div>
+  </div>
+  <div class="screen-scroll">
+    <div class="about-wrap">
+      <div class="about-logo">
+        <div class="about-logo-arabic">تسبيح</div>
+      </div>
+      <div class="about-name">Tasbeeh</div>
+      <div class="about-version">Version 1.0 · Daily Dhikr Counter</div>
+      <div class="about-body">
+        Built with the intention of making the remembrance of Allah simple, beautiful, and accessible.<br><br>
+        All data is stored privately on your device. No accounts, no tracking, no ads — ever.<br><br>
+        May every tap be written as a hasanah.
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div><!-- #screen-settings -->
 
 </div><!-- #app -->
 
@@ -1575,6 +2154,7 @@ function _doGoTo(screen) {
   if (screen === 'goals') renderGoals();
   if (screen === 'library') renderLibrary();
   if (screen === 'sequence') renderSeqItems();
+  if (screen === 'settings') closeSettingsSub();
 }
 
 // ============================================================
@@ -2239,10 +2819,99 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   });
 });
 
+
+// ============================================================
+// ONBOARDING
+// ============================================================
+let obCurrent = 0;
+const OB_TOTAL = 3;
+
+function obInit() {
+  const seen = localStorage.getItem('tasbeeh_onboarded');
+  if (seen) {
+    document.getElementById('onboarding').style.display = 'none';
+  }
+}
+
+function obGoTo(n) {
+  const slides = document.querySelectorAll('.ob-slide');
+  const dots = document.querySelectorAll('.ob-dot');
+  slides.forEach((s, i) => {
+    s.classList.remove('active', 'past');
+    if (i < n) s.classList.add('past');
+    else if (i === n) s.classList.add('active');
+  });
+  dots.forEach((d, i) => d.classList.toggle('active', i === n));
+  obCurrent = n;
+  const nextBtn = document.getElementById('ob-next');
+  const skipBtn = document.getElementById('ob-skip');
+  if (n === OB_TOTAL - 1) {
+    nextBtn.textContent = 'Begin';
+    skipBtn.style.opacity = '0';
+    skipBtn.style.pointerEvents = 'none';
+  } else {
+    nextBtn.textContent = 'Next';
+    skipBtn.style.opacity = '1';
+    skipBtn.style.pointerEvents = 'all';
+  }
+}
+
+function obNext() {
+  if (obCurrent < OB_TOTAL - 1) {
+    obGoTo(obCurrent + 1);
+  } else {
+    obFinish();
+  }
+}
+
+function obSkip() { obFinish(); }
+
+function obFinish() {
+  localStorage.setItem('tasbeeh_onboarded', '1');
+  const el = document.getElementById('onboarding');
+  el.classList.add('hidden');
+  setTimeout(() => { el.style.display = 'none'; }, 500);
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function openSettingsSub(id) {
+  document.querySelectorAll('#screen-settings .settings-sub').forEach(s => s.classList.remove('active'));
+  document.getElementById('settings-' + id).classList.add('active');
+}
+
+function closeSettingsSub() {
+  document.querySelectorAll('#screen-settings .settings-sub').forEach(s => s.classList.remove('active'));
+  document.getElementById('settings-main').classList.add('active');
+}
+
+function confirmClearAll() {
+  showConfirm(
+    'Clear All Data?',
+    'This will permanently erase all history, goals, counts and saved presets. This cannot be undone.',
+    () => {
+      ['tasbih_history','tasbih_goals','tasbih_totals','tasbih_presets','tasbih_v3'].forEach(k => localStorage.removeItem(k));
+      state.count = 0; state.target = null; state.mode = 'up';
+      state.currentDhikr = DHIKR_DB.common[0];
+      state.seqItems = [];
+      updateCounterDisplay();
+      setCounterDhikr(state.currentDhikr);
+      renderSeqItems();
+      renderPresets();
+      renderGoals();
+      renderHistory();
+      closeSettingsSub();
+      goTo('counter');
+    }
+  );
+}
+
 // ============================================================
 // INIT
 // ============================================================
 function init() {
+  obInit();
   load();
   updateCounterDisplay();
   setCounterDhikr(state.currentDhikr);
